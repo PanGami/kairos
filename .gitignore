@@ -1,0 +1,48 @@
+# Data & artefak model (TIDAK pernah di-commit)
+data/
+*.parquet
+*.csv
+*.pkl
+*.joblib
+*.json.model
+mlruns/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Go
+/services/gateway/bin/
+*.test
+*.out
+
+# Node / frontend
+node_modules/
+web/dist/
+web/.vite/
+
+# Generated proto stubs (digenerate saat build, tidak di-commit)
+**/gen/
+**/*_pb2.py
+**/*_pb2_grpc.py
+**/*.pb.go
+
+# Docker / editor / OS
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.swp

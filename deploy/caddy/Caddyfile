@@ -1,0 +1,22 @@
+# Lokal: reverse proxy tanpa TLS publik.
+# Di cloud, ganti :80 dengan FQDN Azure (*.<region>.cloudapp.azure.com) agar Caddy
+# otomatis mengambil sertifikat Let's Encrypt. JANGAN commit FQDN/IP asli (AGENTS.md).
+:80 {
+	encode gzip
+
+	# API ke gateway
+	handle /v1/* {
+		reverse_proxy gateway:8080
+	}
+	handle /healthz {
+		reverse_proxy gateway:8080
+	}
+	handle /readyz {
+		reverse_proxy gateway:8080
+	}
+
+	# Frontend statis (nanti di-mount dari web/dist). Sementara, fallback ke gateway.
+	handle {
+		reverse_proxy gateway:8080
+	}
+}

@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+// Kontrak netral terhadap bursa (tanpa istilah IDX). Sumber kebenaran untuk gateway & ml-service.
+package kairos.forecast.v1;
+
+option go_package = "github.com/kairos/api/gen/kairos/forecast/v1;forecastv1";
+
+// ForecastService disajikan oleh ml-service (gRPC murni). Hanya dipanggil internal
+// oleh gateway dan job ingestion — tidak pernah oleh browser.
+service ForecastService {
+  // Dibaca gateway untuk melayani dashboard.
+  rpc GetForecast(GetForecastRequest) returns (GetForecastResponse);
+  rpc ListInstruments(ListInstrumentsRequest) returns (ListInstrumentsResponse);
+
+  // Internal: dipicu ingestion/scheduler setelah data harian masuk.
+  rpc ComputeForecast(ComputeForecastRequest) returns (ComputeForecastResponse);
+}
+
+// ---- Enums ----
+
+enum RunStatus {
+  RUN_STATUS_UNSPECIFIED = 0;
+  RUN_STATUS_OK = 1;        // fit normal
+  RUN_STATUS_DEGRADED = 2;  // fallback (EWMA/varians konstan) atau reliabilitas rendah
+  RUN_STATUS_FAILED = 3;
+}
+
+enum ReliabilityTier {
+  RELIABILITY_TIER_UNSPECIFIED = 0;
+  RELIABILITY_TIER_FULL = 1;        // mis. TLKM
+  RELIABILITY_TIER_LOW = 2;         // mis. GOTO, DCII (likuiditas tipis)
+  RELIABILITY_TIER_INSUFFICIENT = 3; // tidak lolos quality gate
+}
+
+// ---- Instruments (registry) ----
+
+message Instrument {
+  string instrument_id = 1;   // mis. "IDX:TLKM"
+  string symbol = 2;          // "TLKM"
+  string mic = 3;             // kode bursa
+  string currency = 4;        // "IDR"
+  string timezone = 5;        // "Asia/Jakarta"
+  string status = 6;          // active|paused|insufficient_data|delisted
+  ReliabilityTier reliability_tier = 7;
+}
+
+message ListInstrumentsRequest {
+  bool only_active = 1;
+}
+
+message ListInstrumentsResponse {
+  repeated Instrument instruments = 1;
+}
+
+// ---- Forecast ----
+
+message GetForecastRequest {
+  string instrument_id = 1;
+  int32 horizon_days = 2;     // 7 atau 30
+}
+
+// Satu titik pada jalur kuantil (k = 1..h), untuk grafik aktual-vs-forecast.
+message PathPoint {
+  int32 step = 1;             // k hari ke depan
+  double median = 2;
+  double lower80 = 3;
+  double upper80 = 4;
+  double lower95 = 5;
+  double upper95 = 6;
+}
+
+message Volatility {
+  double daily = 1;
+  double annualized = 2;
+  double lower = 3;           // pita ketidakpastian
+  double upper = 4;
+}
+
+message CorrectionProbability {
+  double theta = 1;           // ambang koreksi (mis. 0.05)
+  double probability = 2;     // 0..1
+  double rolling_base_rate = 3; // base rate bergulir sebagai pembanding
+}
+
+message GetForecastResponse {
+  string instrument_id = 1;
+  int32 horizon_days = 2;
+  string as_of_date = 3;      // ISO date (D-1)
+  RunStatus status = 4;
+  ReliabilityTier reliability_tier = 5;
+
+  // M1: titik tengah = random walk (harga terakhir) + interval.
+  double last_price = 6;
+  double median = 7;
+  double lower80 = 8;
+  double upper80 = 9;
+  double lower95 = 10;
+  double upper95 = 11;
+
+  Volatility volatility = 12;            // M2
+  CorrectionProbability correction = 13; // M3
+
+  repeated PathPoint path = 14;          // jalur kuantil k=1..h
+  string last_successful_update = 15;    // ISO datetime
+}
+
+message ComputeForecastRequest {
+  string instrument_id = 1;
+  string as_of_date = 2;      // kosong = hari bursa terakhir final
+  bool backfill = 3;          // true = isi deret walk-forward historis
+}
+
+message ComputeForecastResponse {
+  string instrument_id = 1;
+  RunStatus status = 2;
+  int32 horizons_written = 3;
+  string message = 4;
+}

@@ -1,0 +1,15 @@
+# Override LOKAL saja (otomatis dibaca `docker compose up`).
+# Membuka port untuk debugging. JANGAN dipakai di cloud.
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+  redis:
+    ports:
+      - "6379:6379"
+  ml-service:
+    ports:
+      - "50051:50051"
+  gateway:
+    ports:
+      - "8080:8080"
