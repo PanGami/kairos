@@ -1,32 +1,33 @@
 /* KAIROS Design Tokens (docs/design/DESIGN.md)
-   Dark Mode Default (Obsidian Quantitative) + Light Mode (Editorial Paper) */
+   Stockbit-Referenced Dark Mode (Matte Carbon + Signature Emerald) & Light Mode (Clean Daylight) */
 
 :root,
 :root[data-theme="dark"] {
-  --bg-canvas: #0A101D;
-  --bg-surface: #111A2E;
-  --bg-elevated: #16223B;
-  --border-subtle: #1E2D4A;
-  --text-primary: #EDF2F8;
-  --text-muted: #8FA3C0;
+  --bg-canvas: #121212;
+  --bg-surface: #181818;
+  --bg-elevated: #222222;
+  --border-subtle: #2A2A2A;
+  --border-control: #636A75;
+  --text-primary: #F3F4F6;
+  --text-muted: #9CA3AF;
 
-  --core-cyan: #0EA5E9;
-  --core-cyan-soft: rgba(14, 165, 233, 0.14);
+  --core-cyan: #00AB6B;
+  --core-cyan-soft: rgba(0, 171, 107, 0.14);
 
   /* Reserved strictly for Primary Action Buttons ONLY */
-  --cta-amber: #F59E0B;
-  --cta-amber-hover: #D97706;
-  --cta-amber-active: #B45309;
-  --cta-amber-ink: #0A101D;
+  --cta-amber: #00AB6B;
+  --cta-amber-hover: #00C47A;
+  --cta-amber-active: #009960;
+  --cta-amber-ink: #121212;
 
-  --status-verified: #10B981;
-  --status-verified-soft: rgba(16, 185, 129, 0.12);
-  --status-warning: #EAB308;
-  --status-warning-soft: rgba(234, 179, 8, 0.12);
-  --status-danger: #EF4444;
-  --status-danger-soft: rgba(239, 68, 68, 0.12);
+  --status-verified: #00AB6B;
+  --status-verified-soft: rgba(0, 171, 107, 0.14);
+  --status-warning: #F59E0B;
+  --status-warning-soft: rgba(245, 158, 11, 0.14);
+  --status-danger: #F87171;
+  --status-danger-soft: rgba(248, 113, 113, 0.14);
 
-  --font-display: "Instrument Serif", Georgia, serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
@@ -37,25 +38,27 @@
 }
 
 :root[data-theme="light"] {
-  --bg-canvas: #F3F6FA;
+  --bg-canvas: #F4F6F8;
   --bg-surface: #FFFFFF;
-  --bg-elevated: #E9EFF7;
-  --border-subtle: #D8E1EE;
-  --text-primary: #0A101D;
-  --text-muted: #4B5E7A;
+  --bg-elevated: #ECEFF3;
+  --border-subtle: #E0E4EA;
+  --border-control: #647080;
+  --text-primary: #121212;
+  --text-muted: #525B68;
 
-  --core-cyan: #0284C7;
-  --core-cyan-soft: rgba(2, 132, 199, 0.10);
+  --core-cyan: #006B42;
+  --core-cyan-soft: rgba(0, 107, 66, 0.10);
 
-  --cta-amber: #D97706;
-  --cta-amber-hover: #B45309;
-  --cta-amber-active: #92400E;
+  /* High-contrast white ink on deep emerald for Light Mode primary buttons */
+  --cta-amber: #006B42;
+  --cta-amber-hover: #005735;
+  --cta-amber-active: #004228;
   --cta-amber-ink: #FFFFFF;
 
-  --status-verified: #059669;
-  --status-verified-soft: rgba(5, 150, 105, 0.10);
-  --status-warning: #CA8A04;
-  --status-warning-soft: rgba(202, 138, 4, 0.10);
-  --status-danger: #DC2626;
-  --status-danger-soft: rgba(220, 38, 38, 0.10);
+  --status-verified: #006B42;
+  --status-verified-soft: rgba(0, 107, 66, 0.10);
+  --status-warning: #92400E;
+  --status-warning-soft: rgba(146, 64, 14, 0.10);
+  --status-danger: #B91C1C;
+  --status-danger-soft: rgba(185, 28, 28, 0.10);
 }

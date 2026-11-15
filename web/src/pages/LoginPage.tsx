@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { Disclaimer } from "../components/Disclaimer";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useLocale } from "../hooks/useLocale";
 
 interface GoogleAccountsID {
   initialize: (cfg: { client_id: string; callback: (res: { credential: string }) => void }) => void;
@@ -16,6 +16,7 @@ declare global {
 
 export function LoginPage() {
   const { user, config, loading, error, loginWithToken } = useAuth();
+  const { t } = useLocale();
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const btnRef = useRef<HTMLDivElement>(null);
@@ -36,7 +37,7 @@ export function LoginPage() {
           try {
             await loginWithToken(credential);
           } catch (e: unknown) {
-            setLoginError(e instanceof Error ? e.message : "Google Sign-In failed");
+            setLoginError(e instanceof Error ? e.message : t.login.googleSignInFailed);
           } finally {
             setSubmitting(false);
           }
@@ -61,18 +62,18 @@ export function LoginPage() {
     script.defer = true;
     script.onload = renderGoogleButton;
     script.onerror = () => {
-      if (!cancelled) setLoginError("Failed to load Google Sign-In script.");
+      if (!cancelled) setLoginError(t.login.scriptLoadError);
     };
     document.head.appendChild(script);
     return () => {
       cancelled = true;
     };
-  }, [config?.google_client_id, loginWithToken]);
+  }, [config?.google_client_id, loginWithToken, t.login.googleSignInFailed, t.login.scriptLoadError]);
 
   if (loading) {
     return (
       <div className="login-shell">
-        <p className="muted">Checking authentication…</p>
+        <p className="muted">{t.login.checkingAuth}</p>
       </div>
     );
   }
@@ -86,7 +87,7 @@ export function LoginPage() {
     try {
       await loginWithToken("dev:analyst@kairos.local:KAIROS Analyst");
     } catch (e: unknown) {
-      setLoginError(e instanceof Error ? e.message : "Sign-in failed");
+      setLoginError(e instanceof Error ? e.message : t.login.signInFailed);
     } finally {
       setSubmitting(false);
     }
@@ -98,30 +99,27 @@ export function LoginPage() {
   return (
     <div className="login-shell">
       <div className="login-card">
-        <strong className="brand">KAIROS</strong>
-        <h1>End-of-Day Risk Monitor</h1>
-        <p className="muted">
-          Sign in with your Google account to access calibrated volatility intervals and drawdown probabilities.
-        </p>
+        <h1>{t.login.title}</h1>
+        <p className="muted">{t.login.description}</p>
 
-        {(error || loginError) && <div className="banner banner-error">{loginError ?? error}</div>}
+        {(error || loginError) && (
+          <div className="banner banner-error" role="alert">
+            {loginError ?? error}
+          </div>
+        )}
 
         <div className="login-actions">
           {hasGoogle && <div ref={btnRef} />}
           {hasDev && (
-            <button type="button" className="btn-primary" disabled={submitting} onClick={handleDevSignIn}>
-              {submitting ? "Signing in…" : "Sign in with Google (Dev Sandbox)"}
+            <button type="button" className="btn btn-primary" disabled={submitting} onClick={handleDevSignIn}>
+              {submitting ? t.login.signingIn : t.login.devSignInButton}
             </button>
           )}
-          {!hasGoogle && !hasDev && (
-            <div className="banner banner-info">
-              Google Sign-In is not configured yet. Set <code>GOOGLE_CLIENT_ID</code> in <code>.env</code> and restart
-              the stack.
-            </div>
-          )}
+          {!hasGoogle && !hasDev && <div className="banner banner-info">{t.login.unavailableBanner}</div>}
+          <Link to="/watcher" className="btn btn-ghost">
+            {t.login.continueGuest}
+          </Link>
         </div>
-
-        <Disclaimer />
       </div>
     </div>
   );

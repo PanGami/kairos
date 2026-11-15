@@ -47,8 +47,8 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
 
 - **Design Source of Truth**: All frontend UI, color tokens, typography, and page layouts MUST follow `docs/design/DESIGN.md`.
 - **Zero-Symbol & No-Emoticon Rule**: Emoticons, emojis, and decorative symbols/glyphs (`-`, `—`, `✓`, `★`, `🔒`, `⚠`, `•`, etc.) are FORBIDDEN in UI labels, copy, badges, and buttons. Use pure typographic status pills (`VERIFIED`, `UNVERIFIED`, `LOCKED`, `FEATURED TODAY`) and structured layout spacing.
-- **Core Color Rule (60-30-10)**: Use 2 connected cool main colors — Deep Institutional Slate Navy (`#0A101D` / `#111A2E`) as 60% foundation and Quantitative Maritime Cyan-Blue (`#0EA5E9` / `#0284C7`) as 30% connected core — paired with 1 opposite complementary secondary color, Sovereign Signal Amber (`#F59E0B` / `#D97706`), reserved strictly for Primary Action Buttons (10% CTAs).
-- **Typography**: Use `'Instrument Serif'` (display), `'Plus Jakarta Sans'` (UI/body), and `'JetBrains Mono'` with `tabular-nums` (numeric data/tickers). Never use Inter, Roboto, or Arial.
+- **Core Color Rule (Stockbit-Referenced 60-30-10)**: Use Matte Carbon (`#121212` / `#181818` dark, `#F4F6F8` / `#FFFFFF` light) as 60% foundation, Stockbit Signature Emerald (`#00AB6B` dark / `#006B42` light) as 30% active brand accent and primary CTA highlight, and Financial Amber (`#F59E0B` dark / `#92400E` light) for 95% tail/warning thresholds.
+- **Typography**: Use `'Plus Jakarta Sans'` (display headings at `600`/`700` and UI/body at `400`/`500`/`600`) and `'JetBrains Mono'` with `tabular-nums` (numeric data/tickers). Never use Inter, Roboto, or Arial.
 
 ## Security (Repository Will Be Public)
 

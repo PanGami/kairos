@@ -1,78 +1,52 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocale } from "../hooks/useLocale";
 
 interface Props {
   isGuest: boolean;
 }
 
-const PILLARS = [
-  {
-    tag: "MODEL M1",
-    title: "Empirical Price Range",
-    desc: "Random walk midpoint surrounded by calibrated 80% and 95% trailing return intervals.",
-  },
-  {
-    tag: "MODEL M2",
-    title: "GARCH-t Volatility",
-    desc: "Time-varying conditional volatility modeling fat-tailed equity shocks with automated constant-variance fallback.",
-  },
-  {
-    tag: "MODEL M3",
-    title: "Correction Probability",
-    desc: "Volatility-implied drawdown probability benchmarked against the trailing 252-day rolling base rate.",
-  },
-];
-
 export function EditorialIntro({ isGuest }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isGuest);
+  const { t } = useLocale();
+  const e = t.editorial;
 
-  if (!isGuest && !expanded) {
-    return (
-      <section className="workspace-bar" aria-label="Authenticated workspace summary">
-        <div className="workspace-bar-meta">
-          <span className="pill pill-cyan">AUTHENTICATED WORKSPACE</span>
-          <span className="pill pill-verified">
-            <span className="geo-dot" aria-hidden="true" />
-            VERIFIED
-          </span>
-          <span className="workspace-bar-text">
-            All calibrated emitters and forecast horizons are unlocked for end-of-day risk inspection.
-          </span>
-        </div>
-        <button type="button" className="btn btn-ghost" onClick={() => setExpanded(true)}>
-          About KAIROS
-        </button>
-      </section>
-    );
-  }
+  useEffect(() => {
+    setExpanded(isGuest);
+  }, [isGuest]);
 
   return (
-    <section className="editorial-intro" aria-label="KAIROS methodology overview">
-      <div className="editorial-kicker">
-        <span className="pill pill-cyan">EOD QUANTITATIVE UNCERTAINTY</span>
-        <span className="pill pill-muted">NIGHTLY BATCH CALIBRATION</span>
-        {!isGuest && (
-          <button type="button" className="btn btn-ghost" onClick={() => setExpanded(false)}>
-            Collapse Overview
-          </button>
-        )}
+    <section className="terminal-widget calibration-widget" aria-label={e.ariaLabel}>
+      <div className="widget-header">
+        <span className="widget-title">{e.title}</span>
+        <button
+          type="button"
+          className="btn-inline-toggle"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? e.collapse : e.expand}
+        </button>
       </div>
 
-      <h1 className="editorial-headline">
-        Calibrated End-of-Day Equity Uncertainty &amp; Tail-Risk Monitor.
-      </h1>
-      <p className="editorial-copy">
-        KAIROS computes nightly post-close uncertainty ranges, conditional volatility estimates, and correction
-        probabilities rather than directional price predictions or trading signals.
-      </p>
+      <div className="calibration-body">
+        <h2 className="calibration-headline">{e.headline}</h2>
 
-      <div className="pillar-grid">
-        {PILLARS.map((pillar) => (
-          <article key={pillar.tag} className="pillar-card">
-            <div className="pillar-tag">{pillar.tag}</div>
-            <h2 className="pillar-title">{pillar.title}</h2>
-            <p className="pillar-desc">{pillar.desc}</p>
-          </article>
-        ))}
+        {expanded && (
+          <>
+            <p className="calibration-copy">{e.copy}</p>
+            <dl className="model-ledger">
+              {e.models.map((m) => (
+                <div key={m.code} className="model-ledger-row">
+                  <dt>{e.modelPrefix} {m.code}</dt>
+                  <dd>
+                    <div className="ledger-title">{m.name}</div>
+                    <div className="ledger-desc">{m.spec}</div>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        )}
       </div>
     </section>
   );

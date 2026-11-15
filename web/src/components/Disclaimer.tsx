@@ -1,9 +1,6 @@
+import { useLocale } from "../hooks/useLocale";
+
 export function Disclaimer() {
-  return (
-    <p className="disclaimer">
-      KAIROS is an educational and statistical end-of-day risk monitor based on historical data and calibrated
-      uncertainty estimates. It does not constitute investment advice, buy or sell signals, or a solicitation to
-      trade any security.
-    </p>
-  );
+  const { t } = useLocale();
+  return <p className="disclaimer">{t.footer.disclaimer}</p>;
 }

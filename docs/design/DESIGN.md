@@ -1,212 +1,203 @@
 # KAIROS: UI/UX & Frontend Design Specification
 
-Document version: 1.0  
+Document version: 1.4  
 Status: Binding Reference for Frontend Development  
-Companion documents: [AGENTS.md](../../AGENTS.md), [PRD.md](../prd/PRD.md), [ADR.md](../adr/ADR.md)
+Companion documents: [AGENTS.md](../../AGENTS.md), [PRD.md](../prd/PRD.md), [ADR.md](../adr/ADR.md)  
+Layout, Color & Typography Reference: [Stockbit Desktop](https://stockbit.com/desktop) (Docked 3-Pane Financial Terminal, Matte Carbon Palette, Signature Emerald Accent, and Geometric Sans + Monospace Typography adapted strictly for End-of-Day Risk Monitoring)
 
 ---
 
-## 1. Design Philosophy & Product Positioning
+## 1. Design Direction, Dials & Product Positioning
 
-KAIROS is an **end-of-day risk monitor** for equity markets (starting with IDX digital infrastructure equities), not a directional price predictor and not a source of buy/sell signals. Never introduce "real-time", "live trading signal", or "enterprise" claims anywhere in UI copy or visual metaphors.
+KAIROS is an **end-of-day risk monitor** for equity markets (starting with IDX digital infrastructure equities), not a directional price predictor and not a source of buy/sell signals. Never introduce "real-time", "live trading signal", orderbooks, running trade feeds, or "enterprise" claims anywhere in UI copy or visual metaphors.
 
-### Aesthetic Direction: Swiss Quantitative Editorial
-The visual system combines institutional financial clarity with editorial precision:
-- **Authoritative restraint**: Generous structured spacing, sharp `1px` hairline borders, high signal-to-noise data density, and zero decorative clutter.
-- **Dark Mode Default (*Obsidian Quantitative*)** with a first-class **Light Mode (*Editorial Paper*)** toggle.
-- **Data Integrity First**: Actual historical series, out-of-sample walk-forward backtests, and forward uncertainty cones must always be visually distinct.
+- **Design Read**: Reading this as a quantitative equity risk monitor for IDX market participants, pairing a **Minimalist Single-Screen Overview (`/`)** with a **Docked 3-Pane Quantitative Terminal Watcher (`/watcher`)** inspired by Stockbit Desktop (`Matte Carbon` surfaces, `Signature Emerald` accent, and crisp `Plus Jakarta Sans` + `JetBrains Mono` typography), dial `ENERGY 2 / RHYTHM 2 / MOTION 2`.
+- **Dial Declaration**:
+  - `ENERGY 2` (Balanced): Direct quantitative authority with clear visual hierarchy above the fold and zero marketing theatrics.
+  - `RHYTHM 2` (Consistent with asymmetric breaks): Overview `/` stacks 3 purposeful tiers (typographic masthead, asymmetric `1.2 : 1 : 1` `M1/M2/M3` ledger, action strip); Watcher `/watcher` divides a compact left **Emitter Watchlist**, center **Quote + EOD Chart**, and right **Cone + KeyStats + Calibration**.
+  - `MOTION 2` (Controlled hierarchical entrance + hover feedback): Overview `/` uses a single subtle top-to-bottom `stageReveal` entrance (`10px`, `420ms`, `0ms`/`90ms`/`180ms` stagger) to reinforce visual reading order without layout shift, disabled completely under `prefers-reduced-motion: reduce`.
+- **Identity Motif**: Docked 3-pane `1px`-bordered terminal workspace (`44px` uppercase widget header bars, Watchlist left pane, Quote + EOD Cone Chart center pane, and KeyStats + Model Calibration right pane) displaying empirical risk ranges above the fold.
+- **Themes**: **Dark Mode Default (*Stockbit Matte Carbon*)** (`#121212` canvas / `#181818` surface) for extended post-close analytical sessions, paired with a WCAG AA verified **Light Mode (*Stockbit Clean Daylight*)** (`#F4F6F8` canvas / `#FFFFFF` surface) toggle via a dedicated Sun/Moon icon control.
+
+### One-Line Decision Log (`R-31`)
+- **Palette (Stockbit Reference)**: Neutral Matte Carbon (`#121212` / `#181818` dark, `#F4F6F8` / `#FFFFFF` light) provides zero-glare workspace ergonomics so Stockbit Signature Emerald (`#00AB6B` dark / `#006B42` light) draws focus cleanly to active selections, M1 forward cones, and primary CTAs without red/green order-ticket noise.
+- **Terminal Layout (Stockbit Desktop Reference)**: Moving the Watchlist (`M1/M2/M3` statuses) left, Quote + EOD Cone Chart center, and Empirical Cone + Key Risk Statistics + Calibration Specification right puts every risk metric and chart interaction above the fold with zero landing-page hero scrolling.
+- **Typography (Stockbit Reference)**: Pairing geometric `'Plus Jakarta Sans'` (`600`/`700` headings, `400`/`500` UI copy) with `'JetBrains Mono'` (`tabular-nums`) keeps docked widget titles, KeyStats rows, and dense numeric tickers aligned like a native trading terminal.
+- **Surface & Borders**: Flat `1px` hairlines (`#2A2A2A` dark / `#E0E4EA` light) and surface stepping replace shadows and glassmorphism blur, while `--border-control` (`#636A75` dark / `#647080` light) enforces `>= 3:1` non-text contrast on every interactive boundary.
+- **Docked Widgets Over Repeated Marketing Cards**: Compact `44px` widget title bars paired with KeyStats hairline tables and a collapsible right-rail Calibration Specification avoid symmetrical multi-column promo grids.
+- **Theme Icon Exception**: A geometric SVG Sun/Moon icon in a `44x44px` button gives instant dark/light recognition in the sticky topbar while keeping data surfaces free of decorative symbols.
 
 ---
 
-## 2. Strict Zero-Symbol & No-Emoticon Rule (MANDATORY)
+## 2. Strict Zero-Symbol & Accessible Controls Rule (MANDATORY)
 
-To preserve institutional credibility and avoid visual noise, **emoticons, emojis, and decorative text symbols are strictly forbidden** across all UI copy, labels, badges, buttons, navigation items, tooltips, and placeholders.
+To preserve institutional clarity and WCAG 2.2 accessibility, **emoticons, emojis, decorative status dots, and standalone punctuation separators are strictly forbidden** across UI labels, badges, metrics, and headings.
 
-### Forbidden Characters in UI Surfaces
-- **Emoticons / Emojis**: Zero emojis of any kind (no lock, star, warning triangle, chart, check, fire, rocket, etc.).
-- **Decorative Punctuation & Unicode Glyphs**: Do NOT use standalone dashes (`-`, `—`, `–`), bullet dots (`•`), checkmarks (`✓`, `✔`), crosses (`✕`, `✖`), stars (`★`), arrows (`→`, `↗`), or warning symbols (`⚠`) inside labels, buttons, status pills, or metric titles.
+### Forbidden Characters & Patterns in UI Surfaces
+- **Emoticons / Emojis**: Zero emojis of any kind across headings, bullets, labels, or buttons.
+- **Standalone Dashes & Decorative Glyphs**: Never use em dashes (`--` / Unicode em dash), en dashes, bullet dots, checkmarks, crosses, stars, or arrows inside UI copy or labels. Always use colons, commas, parentheses, or `"to"` for numeric ranges (`1,900 to 2,172 IDR`).
+- **Decorative Status Dots**: Do not render colored dots beside non-live badges or headings.
+- **Brand Mark & Icon Scope Exception**: Functional SVG icons are permitted exclusively for the compact Sun/Moon theme switcher inside the header (`aria-label` required, `svg` marked `aria-hidden="true"`). Official brand identity assets use the transparent geometric "K" trajectory mark in `web/public/logo.png` (`28x28` rendered inside `.brand-group`, `alt=""`, `aria-hidden="true"` beside the `KAIROS` wordmark), accompanied by browser/app icons (`/favicon.png`, `/favicon.ico`, and `/apple-touch-icon.png`).
 
 ### Approved Visual Replacements
-1. **Pure Typographic Status Pills**: Use concise, uppercase tracked labels inside bordered containers:
+1. **Pure Typographic Status Pills**: Bordered monospace uppercase pills only where carrying real state:
    - `VERIFIED` / `UNVERIFIED`
-   - `LOCKED` / `UNLOCKED`
-   - `FEATURED TODAY`
+   - `LOCKED` / `FEATURED TODAY`
    - `FULL TIER` / `LOW RELIABILITY` / `DEGRADED` / `INSUFFICIENT DATA`
-   - `GOOGLE LINKED` / `EMAIL ONLY`
-2. **Spatial & Structural Separation**: Use `gap`, padding, vertical dividers (`1px solid var(--border)`), or subtle grid alignment instead of text separators like `-`, `|`, or `•`.
-3. **Pure Geometric Indicators**: If a minimal status dot is used (for example beside an active session or legend swatch), render it using a pure CSS geometric element (`6px` circle or `16px x 2px` line) — never a Unicode character.
+2. **Spatial & Structural Separation**: Use `gap`, padding, and `1px solid var(--border-subtle)` horizontal or vertical hairlines instead of text separators like bullets, pipes, or dashes.
+3. **Interactive Affordances**: Every enabled button, link, and control must carry `cursor: pointer`, a visible `:focus-visible` indicator (`2px solid var(--core-cyan)`), distinct hover/active/disabled states, and minimum `44x44px` touch target dimensions on mobile and tablet widths.
 
 ---
 
-## 3. Core Color Architecture (60-30-10 Rule)
+## 3. Core Color Architecture (Stockbit-Referenced 60-30-10 Rule, WCAG Verified)
 
-KAIROS uses a deliberate **Split-Analogous + Complementary Accent** palette tailored for equity risk analysis: **two connected cool main colors** that establish calm analytical authority, paired with **one opposite warm secondary color** reserved exclusively for interactive Primary Action Buttons (CTAs) so user actions command immediate visual attention.
-
-### Color Wheel Rationale for Stock Market Analysis
-- Equity risk interfaces naturally involve dense price charts, volatility bands, and numerical tables. If buttons share the same blue/cyan palette as the chart, interactive CTAs disappear into the analytical workspace.
-- By pairing **Deep Institutional Slate Navy** (~215° hue) with its cool spectrum neighbor **Quantitative Maritime Cyan-Blue** (~198° hue), 90% of the interface creates a cohesive, low-fatigue analytical environment.
-- Placing **Sovereign Signal Amber** (~38° hue, directly opposite ~215° on the color wheel) strictly on **Primary Buttons** creates maximum figure-ground separation without interfering with red/green market risk semantics.
+KAIROS adopts Stockbit's matte carbon and clean daylight neutral surfaces (`60%` foundation) paired with **Stockbit Signature Emerald** (`#00AB6B` dark / `#006B42` light) as the active workspace accent (`30%` active focus, M1 empirical median/80% bands, and primary CTA buttons) and **Financial Amber** (`#F59E0B` dark / `#92400E` light) strictly for warning states and 95% tail bounds (`10%` risk edge). Every foreground/background and interactive border pairing is verified against WCAG 2.2 AA (`>= 4.5:1` normal text, `>= 3.0:1` non-text UI boundaries).
 
 ### 3.1 Core Tokens
 
-| Role | Proportion | Token Name | Dark Mode Value | Light Mode Value | Usage Scope |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Main Color 1 (Base Canvas)** | **60%** | `--bg-canvas` | `#0A101D` | `#F3F6FA` | Page background, app shell |
-| **Main Color 1 (Surface)** | **60%** | `--bg-surface` | `#111A2E` | `#FFFFFF` | Cards, panels, chart containers, auth modal |
-| **Main Color 1 (Elevated)** | **60%** | `--bg-elevated` | `#16223B` | `#E9EFF7` | Hover surfaces, secondary headers, table headers |
-| **Main Color 1 (Border)** | **60%** | `--border-subtle` | `#1E2D4A` | `#D8E1EE` | `1px` structural hairlines, dividers |
-| **Main Color 1 (Text Primary)** | **60%** | `--text-primary` | `#EDF2F8` | `#0A101D` | Headlines, prices, primary values |
-| **Main Color 1 (Text Muted)** | **60%** | `--text-muted` | `#8FA3C0` | `#4B5E7A` | Captions, labels, timestamps, footer copy |
-| **Main Color 2 (Connected Core)** | **30%** | `--core-cyan` | `#0EA5E9` | `#0284C7` | Active nav links, active tabs, selected borders, M1 forecast line, 80% interval band |
-| **Main Color 2 (Core Tint)** | **30%** | `--core-cyan-soft` | `rgba(14, 165, 233, 0.14)` | `rgba(2, 132, 199, 0.10)` | Active pill backgrounds, 80% chart area fill |
-| **Secondary Color (CTA Only)** | **10%** | `--cta-amber` | `#F59E0B` | `#D97706` | **Strictly Primary Action Buttons ONLY** (`Sign In`, `Create Account`, `Unlock Full Access`, `Save Changes`, `Connect Google Account`) |
-| **Secondary Color (CTA Hover)** | **10%** | `--cta-amber-hover` | `#D97706` | `#B45309` | Hover state for primary buttons |
-| **Secondary Color (CTA Active)** | **10%** | `--cta-amber-active` | `#B45309` | `#92400E` | Pressed state for primary buttons |
-| **Secondary Color (CTA Ink)** | **10%** | `--cta-amber-ink` | `#0A101D` | `#FFFFFF` | High-contrast label text inside primary buttons |
+| Role | Proportion | Token Name | Dark Mode | Light Mode | Contrast Note | Usage Scope |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Neutral Ground (Canvas)** | **60%** | `--bg-canvas` | `#121212` | `#F4F6F8` | Base ground | App shell, inner watchlist buttons |
+| **Neutral Surface (Widget)** | **60%** | `--bg-surface` | `#181818` | `#FFFFFF` | Elevated widget | Docked panels, chart frame, footer |
+| **Neutral Elevated (Header/Hover)** | **60%** | `--bg-elevated` | `#222222` | `#ECEFF3` | Active bar | Widget title bars, active emitter row |
+| **Structural Hairline** | **60%** | `--border-subtle` | `#2A2A2A` | `#E0E4EA` | Subtle grid | Non-interactive `1px` dividers and chart grid |
+| **Control Boundary** | **60%** | `--border-control` | `#636A75` | `#647080` | `>= 3.25:1` dark, `4.65:1+` light | Interactive buttons, toggles, watchlist borders |
+| **Text Primary** | **60%** | `--text-primary` | `#F3F4F6` | `#121212` | `14.4:1+` dark, `18.8:1+` light | Headlines, prices, KeyStats values, actual close |
+| **Text Muted** | **60%** | `--text-muted` | `#9CA3AF` | `#525B68` | `6.27:1+` dark, `5.96:1+` light | Captions, axis labels, provenance metadata |
+| **Brand Accent (Signature Emerald)** | **30%** | `--core-cyan` | `#00AB6B` | `#006B42` | `5.33:1+` dark, `5.40:1+` light | Active nav links, horizon toggle, M1 cone, 80% interval |
+| **Brand Accent Tint** | **30%** | `--core-cyan-soft` | `rgba(0, 171, 107, 0.14)` | `rgba(0, 107, 66, 0.10)` | Low opacity | Active horizon fill (`5.29:1` dark, `5.40:1` light) |
+| **Primary CTA Fill** | **10%** | `--cta-amber` | `#00AB6B` | `#006B42` | Primary CTA bg | Primary Action Buttons ONLY (`Sign In`, `Sign in to view all tickers`, submit) |
+| **Primary CTA Hover** | **10%** | `--cta-amber-hover` | `#00C47A` | `#005735` | Hover state | Hover state (`8.19:1` dark, `8.70:1` light) |
+| **Primary CTA Active** | **10%** | `--cta-amber-active` | `#009960` | `#004228` | Active state | Pressed state (`5.11:1` dark, `11.60:1` light) |
+| **Primary CTA Ink** | **10%** | `--cta-amber-ink` | `#121212` | `#FFFFFF` | `6.28:1` dark, `6.60:1` light | Bold button label on `--cta-amber` fill |
 
-> **Strict Rule for Secondary Amber (`--cta-amber`)**: Never use `--cta-amber` for card backgrounds, hero banners, decorative badges, or navigation highlights. It is dedicated strictly to **Primary Buttons** so interactive actions remain unmistakable.
+> **Strict Contrast Note for Primary Emerald CTAs**: In Dark Mode, `--cta-amber` (`#00AB6B`) pairs with matte carbon ink (`#121212`, `6.28:1`) while Light Mode deepens to emerald (`#006B42`) with pure white ink (`#FFFFFF`, `6.60:1`) so Primary Actions clear WCAG AA comfortably in both themes.
 
 ### 3.2 Semantic Status Tokens (Strictly for Data & Account State)
 
-| State | Token | Dark Mode | Light Mode | Usage |
-| :--- | :--- | :--- | :--- | :--- |
-| **Verified / Full Tier** | `--status-verified` | `#10B981` | `#059669` | `VERIFIED` email badge, `FULL TIER` GARCH-t calibration badge |
-| **Warning / Unverified** | `--status-warning` | `#EAB308` | `#CA8A04` | `UNVERIFIED` email badge, `LOW RELIABILITY`, `DEGRADED`, 95% chart boundary line |
-| **Danger / Drawdown** | `--status-danger` | `#EF4444` | `#DC2626` | High drawdown threshold alerts, `INSUFFICIENT DATA`, `Delete Account` danger zone |
+| State | Token | Dark Mode | Light Mode | Contrast vs Surface | Usage |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Verified / Full Tier** | `--status-verified` | `#00AB6B` | `#006B42` | `5.95:1` dark, `6.60:1` light | `VERIFIED` badge, `FULL TIER` badge |
+| **Warning / Tail 95%** | `--status-warning` | `#F59E0B` | `#92400E` | `8.27:1` dark, `7.09:1` light | `LOW RELIABILITY`, `DEGRADED`, 95% chart boundary line |
+| **Danger / Drawdown** | `--status-danger` | `#F87171` | `#B91C1C` | `6.42:1` dark, `6.47:1` light | `INSUFFICIENT DATA`, error banners, destructive actions |
 
 ---
 
-## 4. Typography System
+## 4. Typography System (Stockbit Fintech Sans + Monospace Pair)
 
-Do NOT use generic system fonts (`Inter`, `Roboto`, `Arial`, `Segoe UI`, `system-ui`). Load and pair three purposeful typefaces:
+Do NOT use generic system defaults (`Inter`, `Roboto`, `Arial`, `Segoe UI`, `system-ui`). KAIROS mirrors Stockbit Desktop's clean geometric financial hierarchy using two specialized typefaces without decorative serifs:
 
 | Role | Font Family | Weights | Styling Rules | Usage |
 | :--- | :--- | :--- | :--- | :--- |
-| **Editorial Display** | `'Instrument Serif'` | `400`, `400 italic` | Tight tracking (`-0.02em`), line-height `1.12` | Product hero headline, page headers, major section titles |
-| **UI & Body Sans** | `'Plus Jakarta Sans'` | `400`, `500`, `600`, `700` | Clean legibility (`1.55` line-height) | Navigation, card descriptions, forms, methodology prose, buttons |
-| **Quantitative Mono** | `'JetBrains Mono'` | `400`, `500`, `600` | Mandatory `font-variant-numeric: tabular-nums;` | Stock tickers (`IDX:TLKM`), prices (`IDR`), percentages, `θ`, timestamps, uppercase status pills |
+| **Terminal Display Headings** | `'Plus Jakarta Sans'` | `600`, `700` | Tight display tracking (`-0.015em`), line-height `1.22` | Docked headings, chart question title, methodology headers |
+| **UI & Body Sans** | `'Plus Jakarta Sans'` | `400`, `500`, `600` | Line-height `1.55` | Navigation, KeyStats labels, descriptions, buttons, status banners |
+| **Quantitative Mono** | `'JetBrains Mono'` | `400`, `500`, `600` | Mandatory `font-variant-numeric: tabular-nums;` | Stock tickers (`IDX:TLKM`), IDR figures, percentages, `theta`, timestamps, status pills |
+
+- **Reading Measure, Line Wrap & Heading Hierarchy**: All body paragraphs (`<p>`) enforce `text-wrap: pretty` and reading measures of `50ch` to `54ch` (`<80` rendered characters per line) to prevent horizontal eye-tracking strain and trailing single-word stragglers. Primary page `<h1>` headings maintain at least a `1.25:1` scale step above `16px` body text and sit above secondary `<h2>` widget headings.
 
 ---
 
-## 5. Layout Grid, Spacing & Component Rules
+## 5. Layout Grid, Breakpoints & Component Hierarchy
 
-- **Container Max Width**: `1200px` centered with `24px` horizontal padding on desktop, `16px` on mobile.
-- **Border Radius Scale**: Crisp architectural geometry (`4px` badges/pills, `6px` inputs/buttons, `8px` cards/panels, `12px` auth modal).
-- **Elevation**: Prefer `1px solid var(--border-subtle)` and surface stepping (`--bg-canvas` to `--bg-surface`) over heavy drop shadows.
+- **Container Max Width**: `1440px` centered terminal frame (`16px` horizontal padding) for Stockbit Desktop-grade multi-pane visibility above the fold.
+- **Responsive Breakpoints (Three Explicit States)**:
+  - `> 1024px` (Desktop Terminal): Docked 3-pane workspace grid (`240px minmax(0, 1fr) 320px`) separating the Left **Emitter Watchlist**, Center **Quote Toolbar + EOD Cone Chart**, and Right **Empirical Cone + Key Risk Statistics + Calibration Specification**.
+  - `641px to 1024px` (Tablet): Workspace transitions cleanly to a stacked terminal flow: top horizontal **Emitter Watchlist** grid (`repeat(auto-fit, minmax(180px, 1fr))`), full-width **Quote Toolbar + EOD Cone Chart**, and a 2-column bottom grid pairing **Empirical Price Cone (M1)**, **Volatility Regime (M2)**, and **Drawdown Risk (M3)** above full-width **Calibration Specification**; `.methodology-grid` collapses to a single column.
+  - `<= 640px` (Mobile): Single-column stacked widgets with compact typography (`clamp()`), full-width watchlist rows, stacked quote toolbar, visible wrapping navigation links, minimum `44x44px` touch targets, and zero horizontal scroll (`min-width: 0` on all flex/grid children).
+- **Border Radius Scale**: Crisp architectural geometry (`4px` badges/pills, `6px` interactive controls/buttons, `8px` docked widgets/panels, `12px` modal containers).
 - **Button Hierarchy**:
-  - **Primary CTA**: Solid `--cta-amber` fill with `--cta-amber-ink` bold text. One dominant primary action per section.
-  - **Secondary Action**: Transparent background, `1px solid var(--core-cyan)` border, `--core-cyan` text (e.g., `View Methodology`, `Horizon Toggle` active state).
-  - **Neutral / Ghost Action**: `--bg-surface` with `1px solid var(--border-subtle)` border (e.g., `Theme Toggle`, `Sign Out`, `Cancel`).
-  - **Destructive Action**: `1px solid var(--status-danger)` outline transitioning to solid `--status-danger` on confirmation (`Delete Account`).
+  - **Primary CTA**: Solid `--cta-amber` fill (`#00AB6B` dark / `#006B42` light) with `--cta-amber-ink` (`#121212` dark / `#FFFFFF` light) bold text (`>= 44px` min-height). One dominant primary CTA per viewport context.
+  - **Secondary Active Toggle**: Transparent or `--core-cyan-soft` fill with `1px solid var(--core-cyan)` border and `--core-cyan` ink (active horizon `7D` / `30D`, selected watchlist emitter).
+  - **Ghost Control**: `--bg-surface` fill with `1px solid var(--border-control)` border and `--text-primary` ink (theme toggle icon, `Collapse` / `Expand` calibration toggle, `Sign Out`, `Dismiss`).
 
 ---
 
 ## 6. Page-by-Page Architecture & User Flows
 
 ### 6.1 Entry Flow Overview
-Visitors land directly on the **Dashboard (`/`)** without hitting a login wall. Guest visitors experience the full analytical interface scoped to **1 Featured Emitter (Best Calibrated Today)**, while additional emitters remain visible in a locked state to demonstrate platform breadth and motivate sign-in.
+Visitors land directly on the **Overview Dashboard (`/`)** without hitting a login wall. In a single viewport above the fold, `/` explains KAIROS's post-close uncertainty mandate and `M1/M2/M3` models from top to bottom, culminating in primary calls to launch **Risk Watcher (`/watcher`)**. Guest visitors can inspect `IDX:TLKM` (`FEATURED TODAY`) across 7-day and 30-day horizons inside `/watcher`, while remaining tickers stay visible with `LOCKED` indicators inviting Google Sign-In.
 
 ---
 
-### 6.2 Page 1: Dashboard (`/`)
+### 6.2 Page 1: Overview Dashboard (`/`)
 
-Structured top-to-bottom as a vertical analytical narrative:
+Structured as a calm, minimalist **Single-Screen Typographic Hierarchy (`max-width: 980px`)** flowing top-to-bottom across 3 visual tiers with subtle staged entrance (`stageReveal`):
 
-1. **Top Navigation Bar (Sticky, `64px` height)**:
-   - **Left**: `KAIROS` wordmark + monospace tag `EOD RISK MONITOR` + links (`Dashboard`, `Methodology`).
-   - **Right (Guest)**: Theme Toggle (`DARK` / `LIGHT`) + Ghost button `Sign In` + Primary Amber CTA `Unlock Full Access`.
-   - **Right (Authenticated)**: Theme Toggle + Status Pill (`VERIFIED` or `UNVERIFIED`) + User Profile trigger (`Settings` / `Sign Out`).
+1. **Sticky Terminal Navigation Bar (`min-height: 56px`, wrapping cleanly on mobile)**:
+   - **Left**: `28x28` KAIROS "K" brand mark (`/logo.png`) paired with `KAIROS` wordmark + monospace tag `EOD RISK MONITOR` + live links (`Dashboard` `/`, `Watcher` `/watcher`, `Methodology` `/methodology`) visible across desktop, tablet, and mobile.
+   - **Right (Guest)**: Sun/Moon SVG theme icon button (`44x44px`, accessible label `"Switch to light mode"` / `"Switch to dark mode"`) + single Primary Emerald CTA `Sign In` (`/login`). Never duplicate `Sign In` and `Unlock Full Access` side by side.
+   - **Right (Authenticated)**: Sun/Moon theme icon button + `VERIFIED` status badge + user identity + Ghost `Sign Out` button.
+2. **Tier 1 (Top `.stage-1`): Pure Typographic Positioning**:
+   - **Headline (`<h1>`)**: `"Quantifying Post-Close Equity Uncertainty and Tail Risk."`
+   - **Summary Copy (`.overview-lead`)**: Two direct sentences constrained to `max-width: 54ch` with `text-wrap: pretty`, explaining why KAIROS computes nightly post-close intervals, conditional volatility regimes, and drawdown probabilities verified out-of-sample instead of price predictions or trading calls.
+3. **Tier 2 (Middle `.stage-2`): Unified Quantitative Pillar Ledger (`1.2fr 1fr 1fr`)**:
+   - Single `1px`-bordered horizontal bar pairing `M1 Empirical Price Range` (highlighted with `2px solid var(--core-cyan)` top bar), `M2 GARCH-t Volatility`, and `M3 Correction Probability` using inline monospace `.pillar-code` badges inside each `<h2>` (no `01 /` numeric prefixes, no eyebrow labels above headings, and no repetitive data tables).
+4. **Tier 3 (Bottom `.stage-3`): Action Launch Strip (`cta-launch-strip`)**:
+   - **Heading**: `"Ready to inspect interactive EOD price cones and trailing backtests?"`
+   - **Copy**: `"Guest mode grants immediate access to IDX:TLKM across 7-day and 30-day horizons inside Risk Watcher. Sign in with Google anytime to unlock all available stocks."`
+   - **Actions**: Primary Emerald CTA `Open Risk Watcher` (`/watcher`), Ghost `Read Methodology` (`/methodology`), and Secondary `Sign In with Google` (`/login` when guest).
 
-2. **Section 1: Editorial Product Introduction (Adaptive)**:
-   - **Guest State (Expanded)**:
-     - **Display Headline**: *"Calibrated End-of-Day Equity Uncertainty & Tail-Risk Monitor."*
-     - **Concise Value Statement**: Explains that KAIROS computes nightly post-close uncertainty ranges, conditional volatility, and correction probabilities rather than directional buy/sell predictions.
-     - **Three Core Pillar Cards (Horizontal 3-column grid)**:
-       1. `MODEL M1` / `Empirical Price Range`: Random walk midpoint surrounded by calibrated 80% and 95% trailing return intervals.
-       2. `MODEL M2` / `GARCH-t Volatility`: Time-varying conditional volatility modeling fat-tailed equity shocks with automated constant-variance fallback.
-       3. `MODEL M3` / `Correction Probability`: Volatility-implied drawdown probability benchmarked against the trailing 252-day base rate.
-   - **Authenticated State (Collapsed)**:
-     - Automatically compacts into a single-row workspace header showing active session summary and an optional `About KAIROS` toggle so daily returning users land immediately on the chart workspace.
+---
 
-3. **Section 2: Core Risk Workspace (Chart & Featured Emitter)**:
-   - **Emitter Selection Strip**:
-     - **Guest Mode**: Automatically selects the **1 Featured Emitter with Best Calibration Today** (for example `IDX:TLKM`, marked with typographic pills `FEATURED TODAY` and `FULL TIER`).
-     - Other configured emitters (`IDX:GOTO`, `IDX:DCII`, etc.) remain visible in the selector rail with a crisp `LOCKED` pill. Clicking any locked emitter opens a focused prompt inviting the visitor to sign in for free full-universe access.
-     - **Authenticated Mode**: All emitters are unlocked with instant switching, horizon selector (`7D` / `30D`), and dynamic instrument metadata from `GET /v1/instruments`.
-   - **4 Quantitative Metric Cards (4-column Bento row above the chart)**:
-     1. `LAST CLOSE (EOD)` with `as_of_date`.
-     2. `UNCERTAINTY RANGE (80%)` with `95%` interval bounds shown below in muted monospace.
-     3. `ANNUALIZED VOLATILITY` with daily volatility and uncertainty band bounds.
-     4. `CORRECTION PROBABILITY` displaying threshold `θ` and `252D ROLLING BASE RATE`.
-   - **Interactive Risk Chart (`PriceChart`)**:
-     - Clean legend distinguishing `ACTUAL CLOSE`, `WALK-FORWARD BACKTEST` (out-of-sample), `FORWARD MEDIAN`, `80% INTERVAL`, and `95% INTERVAL`.
-     - Explicit banner states for `INSUFFICIENT DATA`, `LOW RELIABILITY`, and `DEGRADED`.
-   - **Teaser Preview Row (Guest Only)**:
-     - Displays summary cards for locked emitters with masked/redacted volatility figures and an Amber CTA `Sign In to Unlock All Emitters`.
+### 6.3 Page 2: Risk Watcher (`/watcher`)
 
-4. **Section 3: Comprehensive Footer**:
-   - **Row 1 (System Provenance)**: `DATA AS OF YYYY-MM-DD`, `LAST SUCCESSFUL UPDATE`, `SOURCE: YFINANCE + KAGGLE AUDITED REPAIR`, `END-OF-DAY BATCH PIPELINE`.
+Structured as a compact **Docked 3-Pane Quantitative Terminal Workspace** modeled on Stockbit Desktop so the watchlist, chart, empirical price cone, and chunked risk statistics sit cleanly above the fold. Syncs both `?ticker=<instrument_id>` and `?horizon=<7|30>` query parameters via `useSearchParams` (`replace: true`), and automatically surfaces `lockedPrompt` if a guest deep-links to a restricted ticker:
+
+1. **Left Pane (`240px`): Docked `EMITTER WATCHLIST` Widget**:
+   - Compact header displaying `EMITTER WATCHLIST` on the left and `{count} TICKERS` on the right.
+   - Interactive watchlist buttons (`min-height: 56px`) showing ticker (`IDX:TLKM`), live EOD Last Close price on the active/unlocked ticker (`LAST CLOSE` currency figure), plus `inst.mic` (`XIDX`) pinned consistently inside `.emitter-pills` beside `FEATURED TODAY`, active tier badge (`FULL TIER`, `LOW RELIABILITY`, `INSUFFICIENT DATA`), or `LOCKED` so selecting an emitter never shifts pill alignment.
+   - Clicking a `LOCKED` ticker (or opening `/watcher?ticker=IDX:GOTO` as a guest) opens a keyboard-accessible prompt (`Escape` or `Dismiss` closes it) inside the center workspace inviting the user to `Sign in to view all tickers`.
+
+2. **Center Pane (`minmax(0, 1fr)`): Quote Toolbar + EOD Uncertainty Chart + Provenance**:
+   - **Instrument Quote & Horizon Toolbar (`.terminal-quote-bar`)**:
+     - **Left (`.quote-summary`)**: Active `instrument_id`, exchange `mic`, functional reliability/run status pills (`FULL TIER`, `LOW RELIABILITY`, `INSUFFICIENT DATA`, `DEGRADED`, `FAILED`), `LAST CLOSE <last_price> <currency>`, and `AS OF <as_of_date>`.
+     - **Right (`.horizon-control`)**: `HORIZON` label paired with the `7D` / `30D` horizon switcher (`min-height: 44px`).
+   - **Explicit Data States (`R-27`)**:
+     - Loading state explicitly names what is being fetched (`Loading active instrument universe from gateway...`, `Loading 7-day forecast cone and trailing closes for IDX:TLKM...`). Switching between `7D` and `30D` keeps `<PriceChart />` mounted in-place with an `UPDATING {horizon}D...` status pill (and initial load reserves the `420px` chart height via `.chart-skeleton`) so horizon changes never collapse the center column.
+     - Error and empty states explain cause and recovery action (for example `"Reload page"`).
+     - Calibration banners surface `INSUFFICIENT DATA`, `LOW RELIABILITY`, and `DEGRADED` run status cleanly above the chart.
+   - **Chartbit-Style EOD Uncertainty Chart (`PriceChart`)**:
+     - Primary page heading (`<h1 className="chart-title">`, `clamp(1.25rem, 1.85vw, 1.45rem)`): `"IDX:TLKM: Where does the 7-day empirical cone sit against trailing closes?"`
+     - Crisp horizontal legend distinguishing `ACTUAL CLOSE`, `WALK-FORWARD BACKTEST`, `FORWARD MEDIAN`, `80% INTERVAL`, and `95% INTERVAL` using `16px x 2px` CSS geometric indicators.
+     - `lightweight-charts` canvas rendered in the active Dark or Light theme inside a `role="img"` container with a descriptive `aria-label`, displaying right-axis last-value tags (`lastValueVisible: true`) for `Forecast median`, `80% upper`, and `80% lower`.
+   - **Snapshot Provenance Strip**: `DATA AS OF <as_of_date>`, `LAST SUCCESSFUL UPDATE <YYYY-MM-DD HH:MM UTC>`, `HORIZON <horizon_days>D`.
+
+3. **Right Pane (`320px`): Four Chunked Quantitative Widgets**:
+   - **Widget 1 (`EMPIRICAL PRICE CONE (M1)`)**: `80% EMPIRICAL PRICE RANGE` (`<lower80> to <upper80> IDR`), `95% Tail Interval`, and `Forward Median (M1)`.
+   - **Widget 2 (`VOLATILITY REGIME (M2)`)**: 3 hairline rows (`Annualized Vol (M2)`, `Daily Vol (M2)`, `Volatility Band (M2)`).
+   - **Widget 3 (`DRAWDOWN RISK (M3)`)**: 3 hairline rows (`Correction Prob (M3)`, `Drawdown Threshold`, `252D Base Rate`) without duplicating `Last Close (EOD)` from the quote toolbar.
+   - **Widget 4 (`CALIBRATION SPECIFICATION`)**: Docked `.terminal-widget.calibration-widget` housing an `<h2>` `.calibration-headline` and `<dl className="model-ledger">` for `M1`, `M2`, and `M3`, with a working `Collapse` / `Expand` toggle available to both guest (expanded by default) and authenticated sessions (collapsed by default).
+
+4. **Shared Footer**:
+   - **Row 1 (System Provenance)**: `DATA AS OF EOD SNAPSHOT`, `LAST SUCCESSFUL UPDATE NIGHTLY BATCH`, `SOURCE YFINANCE AND KAGGLE AUDITED REPAIR`, `END-OF-DAY BATCH PIPELINE` separated by `1px` borders.
    - **Row 2 (Mandatory Risk Disclaimer)**: Clear statement that KAIROS is an educational/statistical end-of-day risk monitor, not investment advice or trading signals.
-   - **Row 3 (Navigation)**: Links to `Dashboard`, `Methodology`, `Account Settings`, and `Documentation`.
+   - **Row 3 (Navigation)**: Strictly links to live existing destinations (`Dashboard` `/`, `Watcher` `/watcher`, `Methodology` `/methodology`, and `Sign In` `/login` when guest). Zero links to unbuilt sections.
 
 ---
 
-### 6.3 Page 2: Auth (`/login`)
+### 6.4 Page 3: Methodology (`/methodology`)
 
-Simple, frictionless Dual-Auth supporting both **Local Email + Password** and **Google OAuth**, backed by one unified account record (`users` table) that tracks Google linkage and verification status.
+Rendered inside `.methodology-screen` (`max-width: 1120px`) using the same terminal widget grammar and zero-symbol discipline as `/watcher`:
 
-1. **Page Layout**:
-   - Desktop: Two-column asymmetric split (`42%` left analytical context panel with clean KAIROS overview and data security note; `58%` right centered authentication card).
-   - Mobile: Single centered authentication card.
-2. **Mode Switcher (Top of Card)**:
-   - Clean segmented tabs: `Sign In` and `Create Account`.
-3. **Google OAuth Primary Option**:
-   - Full-width Google Sign-In button (`Continue with Google`).
-   - Behavior: If a user signs in with Google using an email already registered locally, the backend links the Google identity and marks email verification as `VERIFIED`.
-4. **Divider**:
-   - Pure hairline divider with centered uppercase muted label `OR CONTINUE WITH EMAIL`.
-5. **Local Email & Password Form**:
-   - **Sign In Tab**: `Email Address`, `Password` (with text toggle `SHOW` / `HIDE`), and Primary Amber CTA `Sign In`.
-   - **Create Account Tab**: `Full Name`, `Email Address`, `Password`, and Primary Amber CTA `Create Account`.
-6. **Gmail / Email Verification Awareness**:
-   - Accounts created with local email/password start with status `UNVERIFIED` until verified via email confirmation link or linked with Google.
-   - When signed in with an `UNVERIFIED` account, display a non-blocking amber-bordered notice in Dashboard and Settings guiding the user to verify via inbox or connect their Google account for instant verification.
+- **Header (`.methodology-header`)**: `<h1 className="methodology-title">Methodology and Calibration Limitations</h1>` paired with `.methodology-lead` (`max-width: 54ch`, `text-wrap: pretty`).
+- **2-Column Terminal Widget Grid (`.methodology-grid`, collapsing to `1fr` at `<= 1024px`)**:
+  1. `CALIBRATED RISK MODELS` (`M1 / M2 / M3`): `<dl className="model-ledger">` detailing `MODEL M1`, `MODEL M2`, `MODEL M3`, and `LEAK-FREE` embargo verification (`max-width: 50ch` descriptions).
+  2. `READING THE CHART` (`5 SERIES`): Hairline guide rows pairing geometric `.legend-swatch` indicators (`swatch-actual`, `swatch-backtest`, `swatch-forecast`, `swatch-80`, `swatch-95`) with accurate copy (`"Solid emerald median (flat random walk)"`, `"Dashed emerald 80% empirical interval"`, `"Dotted amber 95% tail interval"`).
+  3. `KNOWN STATISTICAL LIMITATIONS` (`SAMPLE AND REGIME`): 4 hairline rows summarizing effective sample size, non-stationary base rates, `IDX:GOTO` plateau behavior, and `IDX:DCII` thin liquidity.
+  4. `DATA PROVENANCE AND BENCHMARKS` (`EOD PIPELINE`): 3 hairline rows covering Yahoo Finance ingestion (`yfinance`), audited Kaggle repairs, and market-calendar / dividend caveats.
 
 ---
 
-### 6.4 Page 3: Settings (`/settings`)
+### 6.5 Page 4: Authentication (`/login`) and Planned `/settings`
 
-Protected route (`/settings`) organized as a single centered `720px` column with four crisp, single-responsibility cards:
-
-1. **Card 1: Profile Identity**:
-   - Circular profile avatar preview (`72px`) with `Upload Photo` and `Remove Photo` actions (plus `Sync Google Photo` when Google is connected).
-   - Editable `Display Name` input field.
-   - Primary Amber CTA `Save Profile`.
-
-2. **Card 2: Email & Connected Google Account**:
-   - Displays `Primary Email` in monospace alongside a bordered status pill:
-     - `VERIFIED` (`--status-verified`) when verified via email token or Google OAuth.
-     - `UNVERIFIED` (`--status-warning`) accompanied by a `Resend Verification Email` secondary button.
-   - **Google Account Link Panel**:
-     - **When Not Linked**: Status pill `NOT CONNECTED` and Primary Amber CTA `Connect Google Account` explaining that linking enables one-click Google login and instant email verification.
-     - **When Linked**: Displays connected Gmail address, link timestamp, status pill `GOOGLE LINKED`, and a neutral `Disconnect Google` button (guardrail: disabled with explanatory helper text if the user has not yet set a local password, preventing account lockout).
-
-3. **Card 3: Password & Authentication Security**:
-   - Displays active login methods (`EMAIL + PASSWORD`, `GOOGLE OAUTH`).
-   - **Adaptive Form**:
-     - If user already has a local password: `Current Password`, `New Password`, `Confirm New Password`, and CTA `Update Password`.
-     - If user registered via Google and has no local password yet: `New Password`, `Confirm New Password`, and CTA `Set Local Password` so they can also log in via email and password.
-
-4. **Card 4: Danger Zone (Account Deletion)**:
-   - Bordered with `1px solid var(--status-danger)`.
-   - Explains permanent deletion of profile, linked credentials, and active sessions (`users` and `user_sessions`).
-   - `Delete Account` destructive button triggers a confirmation modal requiring explicit typed confirmation (`DELETE`) before submitting.
+- **`/login` (Implemented Inside `<Layout />`)**: Mounted inside `<Layout />`'s child routes so the sticky topbar, Dark/Light toggle, and shared disclaimer footer remain accessible. Centers `.login-card` inside `.login-shell`, provides `role="alert"` on authentication error banners, renders user-safe copy when Google Sign-In is unavailable in the environment (no raw `.env` instructions), and includes a `Continue as Guest in Risk Watcher` (`/watcher`) ghost action alongside Google OAuth and optional dev sandbox sign-in.
+- **Planned Subsequent Auth Enhancements & `/settings`**: Integrating local email/password + dual-account linking cleanly per Sections 3 and 4 tokens, and adding a `ProtectedRoute` `/settings` screen (`VERIFIED` / `UNVERIFIED` status, Google link controls, password management, and account deletion confirmation `DELETE`) once post-review sign-off is complete.
 
 ---
 
 ## 7. Frontend Code Architecture Alignment
 
-All implementations of this specification inside `web/` must comply with [AGENTS.md](../../AGENTS.md):
-- Never create monolithic page or service files. Keep routing (`src/routes/`), API services (`src/services/*.service.ts`), hooks (`src/hooks/`), and presentational components (`src/components/`) strictly separated by domain.
-- Centralize CSS design tokens (`--bg-canvas`, `--core-cyan`, `--cta-amber`, semantic tokens, font families) in dedicated theme/token stylesheets under `web/src/styles/`.
-- Keep all copy exchange-neutral in core abstractions (ADR-004) and strictly free of emoticons or decorative symbols.
+All implementations inside `web/` must comply with [AGENTS.md](../../AGENTS.md):
+- Keep routing (`src/routes/`), API services (`src/services/*.service.ts`), hooks (`src/hooks/`), and presentational components (`src/components/`) strictly separated by domain.
+- Centralize CSS design tokens in `web/src/styles/tokens.css` and base affordance/layout rules in `web/src/styles/global.css`.
+- Keep all UI abstractions exchange-neutral (ADR-004).
