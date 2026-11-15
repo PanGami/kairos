@@ -10,9 +10,9 @@ Solo project + AI agents. Rules in `AGENTS.md` are binding.
 ## Local Development
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose -f docker-compose.local.yml up -d --build
+curl http://localhost/v1/instruments
 curl http://localhost:8080/healthz
-curl http://localhost:8080/v1/instruments
 ```
 
 ## Don'ts

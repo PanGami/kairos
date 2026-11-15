@@ -96,6 +96,24 @@ CREATE TABLE IF NOT EXISTS api_keys (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- ---- auth-service: users, user_sessions ----
+CREATE TABLE IF NOT EXISTS users (
+  user_id       TEXT PRIMARY KEY,
+  google_sub    TEXT UNIQUE NOT NULL,
+  email         TEXT UNIQUE NOT NULL,
+  name          TEXT NOT NULL,
+  picture_url   TEXT NOT NULL DEFAULT '',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_login_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS user_sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Seed registry with 3 MVP tickers (idempotent).
 INSERT INTO instruments (instrument_id, symbol, provider_symbol, reliability_tier) VALUES
   ('IDX:TLKM', 'TLKM', 'TLKM.JK', 'full'),

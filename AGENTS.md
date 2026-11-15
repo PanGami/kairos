@@ -25,8 +25,9 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
 
 - ingestion: `instruments`, `prices_daily`, `ingestion_runs`
 - ml-service: `model_specs`, `forecast_runs`, `forecasts`
+- auth-service: `users`, `user_sessions`
 - gateway: `api_keys` (admin only)
-- Cross-owner queries are FORBIDDEN. Gateway reads forecasts via gRPC, not SQL.
+- Cross-owner queries are FORBIDDEN. Gateway reads forecasts and auth sessions via gRPC, not SQL.
 
 ## Engineering & Code Organization (MANDATORY)
 
@@ -41,6 +42,13 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
   - **Domain / Core Logic** (`forecast.py`, `validator.py`, `domain/`): Pure business, modeling, or validation logic, decoupled from I/O so it can be unit-tested in isolation.
   - **Data Access / Repositories** (`db.py`, `repository/`, `cache/`): Database connections, SQL queries, and Redis operations, split by domain/table owner as queries grow.
   - **Shared Service Utilities** (`config.py`, `middleware/`, `utils/`): Reusable within-service helpers (structured logging, request-id propagation, rate limiting) to prevent duplicate helper functions.
+
+## UI/UX & Frontend Design Rules (see docs/design/DESIGN.md)
+
+- **Design Source of Truth**: All frontend UI, color tokens, typography, and page layouts MUST follow `docs/design/DESIGN.md`.
+- **Zero-Symbol & No-Emoticon Rule**: Emoticons, emojis, and decorative symbols/glyphs (`-`, `—`, `✓`, `★`, `🔒`, `⚠`, `•`, etc.) are FORBIDDEN in UI labels, copy, badges, and buttons. Use pure typographic status pills (`VERIFIED`, `UNVERIFIED`, `LOCKED`, `FEATURED TODAY`) and structured layout spacing.
+- **Core Color Rule (60-30-10)**: Use 2 connected cool main colors — Deep Institutional Slate Navy (`#0A101D` / `#111A2E`) as 60% foundation and Quantitative Maritime Cyan-Blue (`#0EA5E9` / `#0284C7`) as 30% connected core — paired with 1 opposite complementary secondary color, Sovereign Signal Amber (`#F59E0B` / `#D97706`), reserved strictly for Primary Action Buttons (10% CTAs).
+- **Typography**: Use `'Instrument Serif'` (display), `'Plus Jakarta Sans'` (UI/body), and `'JetBrains Mono'` with `tabular-nums` (numeric data/tickers). Never use Inter, Roboto, or Arial.
 
 ## Security (Repository Will Be Public)
 

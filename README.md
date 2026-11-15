@@ -25,9 +25,11 @@ Docs: [`docs/prd/PRD.md`](docs/prd/PRD.md) · [`docs/adr/ADR.md`](docs/adr/ADR.m
 ## Run Locally
 
 ```bash
-cp .env.example .env     # fill in values for local dev
-docker compose up --build
-# gateway health:
+cp .env.example .env     # adjust values if needed (defaults work out of the box)
+docker compose -f docker-compose.local.yml up -d --build
+# dashboard + reverse-proxied API (Caddy):
+curl http://localhost/v1/instruments
+# gateway direct health:
 curl http://localhost:8080/healthz
 ```
 

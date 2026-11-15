@@ -1,4 +1,4 @@
-// KAIROS gateway bootstrap: wires gRPC client, Redis cache, domain services, router, and HTTP server.
+// KAIROS gateway bootstrap: wires gRPC clients, Redis cache, domain services, router, and HTTP server.
 package main
 
 import (
@@ -8,12 +8,14 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	authv1 "github.com/kairos/gateway/gen/kairos/auth/v1"
 	forecastv1 "github.com/kairos/gateway/gen/kairos/forecast/v1"
 	"github.com/kairos/gateway/internal/cache"
 	"github.com/kairos/gateway/internal/handler"
@@ -34,26 +36,39 @@ func main() {
 	slog.SetDefault(logger)
 
 	mlAddr := env("ML_SERVICE_HOST", "ml-service") + ":" + env("ML_SERVICE_PORT", "50051")
+	authAddr := env("AUTH_SERVICE_HOST", "auth-service") + ":" + env("AUTH_SERVICE_PORT", "50052")
 	redisAddr := env("REDIS_HOST", "redis") + ":" + env("REDIS_PORT", "6379")
 	rateLimit, _ := strconv.Atoi(env("RATE_LIMIT_PER_MIN", "120"))
 
-	conn, err := grpc.NewClient(mlAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	mlConn, err := grpc.NewClient(mlAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		slog.Error("dial ml-service", "err", err)
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer mlConn.Close()
 
-	mlClient := forecastv1.NewForecastServiceClient(conn)
+	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		slog.Error("dial auth-service", "err", err)
+		os.Exit(1)
+	}
+	defer authConn.Close()
+
+	mlClient := forecastv1.NewForecastServiceClient(mlConn)
+	authClient := authv1.NewAuthServiceClient(authConn)
 	redisCache := cache.New(redisAddr)
+
+	devLogin := strings.EqualFold(env("AUTH_DEV_BYPASS", "false"), "true")
+	authSvc := services.NewAuthService(authClient, os.Getenv("GOOGLE_CLIENT_ID"), devLogin)
 
 	h := handler.New(
 		services.NewInstrumentService(mlClient, redisCache),
 		services.NewForecastService(mlClient, redisCache),
+		authSvc,
 		env("ADMIN_API_KEY", "change_me_admin_key"),
 	)
 
-	mux := routes.NewRouter(h)
+	mux := routes.NewRouter(h, authSvc)
 
 	addr := ":" + env("GATEWAY_PORT", "8080")
 	srv := &http.Server{
@@ -63,7 +78,7 @@ func main() {
 	}
 
 	go func() {
-		slog.Info("gateway started", "addr", addr, "ml", mlAddr, "redis", redisAddr)
+		slog.Info("gateway started", "addr", addr, "ml", mlAddr, "auth", authAddr, "redis", redisAddr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("listen", "err", err)
 			os.Exit(1)

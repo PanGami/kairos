@@ -1,34 +1,61 @@
 import type { Forecast } from "../types/api.types";
 import { formatPct, formatPrice } from "../utils/format";
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+interface StatProps {
+  label: string;
+  value: string;
+  hints?: string[];
+}
+
+function Stat({ label, value, hints }: StatProps) {
   return (
-    <div className="stat">
+    <div className="stat-card">
       <div className="stat-label">{label}</div>
-      <div className="stat-value">{value}</div>
-      {hint && <div className="stat-hint">{hint}</div>}
+      <div>
+        <div className="stat-value">{value}</div>
+        {hints && hints.length > 0 && (
+          <div className="stat-hint">
+            {hints.map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-export function ForecastSummary({ f }: { f: Forecast }) {
+export function ForecastSummary({ f, currency = "IDR" }: { f: Forecast; currency?: string }) {
   return (
-    <div className="stats">
-      <Stat label={`Last close (${f.as_of_date})`} value={formatPrice(f.last_price)} />
+    <div className="stats-grid">
       <Stat
-        label={`${f.horizon_days}d range (80%)`}
-        value={`${formatPrice(f.lower80)} – ${formatPrice(f.upper80)}`}
-        hint={`95%: ${formatPrice(f.lower95)} – ${formatPrice(f.upper95)}`}
+        label="LAST CLOSE (EOD)"
+        value={`${formatPrice(f.last_price)} ${currency}`}
+        hints={[`AS OF ${f.as_of_date}`]}
       />
       <Stat
-        label="Annualized volatility"
+        label="UNCERTAINTY RANGE (80%)"
+        value={`${formatPrice(f.lower80)} TO ${formatPrice(f.upper80)} ${currency}`}
+        hints={[
+          `${f.horizon_days}D HORIZON`,
+          `95% INTERVAL ${formatPrice(f.lower95)} TO ${formatPrice(f.upper95)} ${currency}`,
+        ]}
+      />
+      <Stat
+        label="ANNUALIZED VOLATILITY"
         value={formatPct(f.volatility.annualized)}
-        hint={`Daily ${formatPct(f.volatility.daily, 2)}`}
+        hints={[
+          `DAILY ${formatPct(f.volatility.daily, 2)}`,
+          `BAND ${formatPct(f.volatility.lower)} TO ${formatPct(f.volatility.upper)}`,
+        ]}
       />
       <Stat
-        label={`Drawdown ≥ ${formatPct(f.correction.theta, 0)} probability`}
+        label="CORRECTION PROBABILITY"
         value={formatPct(f.correction.probability)}
-        hint={`Rolling base rate ${formatPct(f.correction.rolling_base_rate)}`}
+        hints={[
+          `THRESHOLD THETA ${formatPct(f.correction.theta, 1)}`,
+          `252D ROLLING BASE RATE ${formatPct(f.correction.rolling_base_rate)}`,
+        ]}
       />
     </div>
   );

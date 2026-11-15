@@ -167,15 +167,15 @@ Split-ready rules: no imports across service folders; communication only via con
 
 ---
 
-## 8. Execution Order (Not Figma First)
+## 8. Execution Order (Contracts First)
 
 1. Lock API/data contracts (sections 2–3) — source of truth.
 2. Deploy hello-world no later than **Nov 14**: gateway → ml-service stub → Postgres, via Caddy + HTTPS.
 3. Parallel backend + frontend development against contracts (frontend uses schema-compliant dummy data).
 4. Lo-fi wireframe (not hi-fi) + mandatory states list: loading, error, empty, **insufficient-data**, "data as of", disclaimer.
-5. Hi-fi Figma + design system = [MVP IF TIME PERMITS].
+5. High-fidelity design system polish = [MVP IF TIME PERMITS].
 
-Cut-line: if behind schedule at the end of Nov 14 → drop LSTM & hi-fi Figma BEFORE sacrificing cloud deployment & baseline quality.
+Cut-line: if behind schedule at the end of Nov 14 → drop LSTM BEFORE sacrificing cloud deployment & baseline quality.
 
 ---
 

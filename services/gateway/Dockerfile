@@ -10,18 +10,23 @@ COPY services/gateway/go.mod ./
 RUN go mod download || true
 
 COPY api/proto ./proto
-ENV GO_PKG=github.com/kairos/gateway/gen/kairos/forecast/v1;forecastv1
+ENV FORECAST_PKG=github.com/kairos/gateway/gen/kairos/forecast/v1;forecastv1
+ENV AUTH_PKG=github.com/kairos/gateway/gen/kairos/auth/v1;authv1
 RUN mkdir -p gen && \
     protoc -I proto \
       --go_out=gen --go_opt=module=github.com/kairos/gateway/gen \
-      --go_opt=Mkairos/forecast/v1/forecast.proto=${GO_PKG} \
+      --go_opt=Mkairos/forecast/v1/forecast.proto=${FORECAST_PKG} \
+      --go_opt=Mkairos/auth/v1/auth.proto=${AUTH_PKG} \
       --go-grpc_out=gen --go-grpc_opt=module=github.com/kairos/gateway/gen \
-      --go-grpc_opt=Mkairos/forecast/v1/forecast.proto=${GO_PKG} \
-      proto/kairos/forecast/v1/forecast.proto && \
+      --go-grpc_opt=Mkairos/forecast/v1/forecast.proto=${FORECAST_PKG} \
+      --go-grpc_opt=Mkairos/auth/v1/auth.proto=${AUTH_PKG} \
+      proto/kairos/forecast/v1/forecast.proto \
+      proto/kairos/auth/v1/auth.proto && \
     rm -rf proto
 
 COPY services/gateway/ ./
 RUN go mod tidy && \
+    go test -v ./... && \
     CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/gateway ./cmd/gateway
 
 # ---- Stage 2: runtime (non-root, minimal) ----

@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+// Exchange-neutral auth contract. Source of truth for gateway & auth-service.
+package kairos.auth.v1;
+
+option go_package = "github.com/kairos/api/gen/kairos/auth/v1;authv1";
+
+// AuthService manages Google OAuth sign-in and opaque user sessions.
+// Served over gRPC by auth-service; called internally by gateway only.
+service AuthService {
+  rpc SignInWithGoogle(SignInWithGoogleRequest) returns (SignInWithGoogleResponse);
+  rpc ValidateSession(ValidateSessionRequest) returns (ValidateSessionResponse);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+}
+
+message User {
+  string user_id = 1;
+  string email = 2;
+  string name = 3;
+  string picture_url = 4;
+}
+
+message SignInWithGoogleRequest {
+  string id_token = 1;
+}
+
+message SignInWithGoogleResponse {
+  User user = 1;
+  string session_token = 2;
+  string expires_at = 3; // RFC3339 timestamp
+}
+
+message ValidateSessionRequest {
+  string session_token = 1;
+}
+
+message ValidateSessionResponse {
+  bool valid = 1;
+  User user = 2;
+}
+
+message SignOutRequest {
+  string session_token = 1;
+}
+
+message SignOutResponse {
+  bool ok = 1;
+}

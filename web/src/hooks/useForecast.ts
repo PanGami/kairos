@@ -1,9 +1,15 @@
 import { getForecast, getHistory } from "../services/forecast.service";
-import type { Horizon } from "../types/api.types";
+import type { Forecast, History, Horizon } from "../types/api.types";
 import { useAsync } from "./useAsync";
 
 export const useForecast = (id: string | null, horizon: Horizon) =>
-  useAsync((s) => (id ? getForecast(id, horizon, s) : Promise.reject(new Error("No instrument"))), [id, horizon]);
+  useAsync<Forecast | null>(
+    (s) => (id ? getForecast(id, horizon, s) : Promise.resolve(null)),
+    [id, horizon],
+  );
 
 export const useHistory = (id: string | null) =>
-  useAsync((s) => (id ? getHistory(id, s) : Promise.reject(new Error("No instrument"))), [id]);
+  useAsync<History | null>(
+    (s) => (id ? getHistory(id, s) : Promise.resolve(null)),
+    [id],
+  );

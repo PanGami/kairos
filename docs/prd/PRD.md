@@ -160,9 +160,9 @@ Limitations that must appear in documentation and presentations: small effective
 | Wednesday Nov 18 (Session 3) | Full presentation simulation and live demo (MVP deadline) |
 | Earliest Nov 19 | Public repository release, following security audit and legal/IP clearance |
 
-**Cut-line rule:** if behind schedule at the end of November 14, drop LSTM and hi-fi Figma (lo-fi wireframes suffice) before sacrificing cloud deployment and baseline quality. Out-of-scope features move to the post-session roadmap.
+**Cut-line rule:** if behind schedule at the end of November 14, drop LSTM and UI polish (lo-fi wireframes suffice) before sacrificing cloud deployment and baseline quality. Out-of-scope features move to the post-session roadmap.
 
-**Execution order:** API/data contracts first, then hello-world deployment, then parallel backend and frontend implementation against contracts (frontend uses schema-compliant dummy data), then lo-fi wireframes covering all mandatory states. Hi-fi Figma only if time permits.
+**Execution order:** API/data contracts first, then hello-world deployment, then parallel backend and frontend implementation against contracts (frontend uses schema-compliant dummy data), then lo-fi wireframes covering all mandatory states. High-fidelity UI polish only if time permits.
 
 Reminder: maintain pace and sleep. Burnout risk is real on a tight solo schedule.
 
@@ -210,7 +210,7 @@ Technical metrics:
 ## 13. Version Roadmap
 
 ### V1 (MVP): November 16 and 18, 2026
-Scope defined in section 5 (all MVP MANDATORY items). Three tickers, daily batch fit, read-only dashboard, single-VM Azure deployment, CI/CD, core documentation. If time permits: 4th ticker via config, Blob backups, local MLflow, Postman collection, hi-fi Figma, threshold badges.
+Scope defined in section 5 (all MVP MANDATORY items). Three tickers, daily batch fit, read-only dashboard, single-VM Azure deployment, CI/CD, core documentation. If time permits: 4th ticker via config, Blob backups, local MLflow, Postman collection, threshold badges.
 
 ### V1.x (Post-Session, Same Repository)
 - Live accuracy history: comparing stored forecasts against realized prices once horizons elapse (FR-13).

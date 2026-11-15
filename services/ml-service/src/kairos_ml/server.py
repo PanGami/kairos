@@ -1,4 +1,4 @@
-"""KAIROS ml-service bootstrap: gRPC server startup, health registration, and SIGTERM shutdown."""
+"""KAIROS ml-service bootstrap: gRPC server startup, route registration, and SIGTERM shutdown."""
 from __future__ import annotations
 
 from concurrent import futures
@@ -7,22 +7,17 @@ import signal
 import sys
 
 import grpc
-from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 
-from gen.kairos.forecast.v1 import forecast_pb2_grpc as pb_grpc
 from kairos_ml import config
-from kairos_ml.servicer import ForecastService
+from kairos_ml.routes.forecast_routes import register_forecast_routes
+from kairos_ml.routes.health_routes import register_health_routes
 
 
 def serve() -> None:
     port = config.ML_SERVICE_PORT
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
-    pb_grpc.add_ForecastServiceServicer_to_server(ForecastService(), server)
-
-    health_servicer = health.HealthServicer()
-    health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
-    health_servicer.set("", health_pb2.HealthCheckResponse.SERVING)
-    health_servicer.set("kairos.forecast.v1.ForecastService", health_pb2.HealthCheckResponse.SERVING)
+    register_forecast_routes(server)
+    register_health_routes(server)
 
     server.add_insecure_port(f"[::]:{port}")
     server.start()

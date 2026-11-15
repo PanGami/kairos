@@ -9,12 +9,18 @@ interface Props {
 
 export function HorizonToggle({ value, onChange }: Props) {
   return (
-    <div className="field" role="group" aria-label="Horizon">
-      Horizon
-      <div className="toggle">
+    <div className="control-group">
+      <span className="control-label">Forecast Horizon</span>
+      <div className="horizon-toggle" role="group" aria-label="Horizon">
         {OPTIONS.map((h) => (
-          <button key={h} className={h === value ? "active" : ""} onClick={() => onChange(h)}>
-            {h}d
+          <button
+            key={h}
+            type="button"
+            className={`horizon-btn${h === value ? " active" : ""}`}
+            aria-pressed={h === value}
+            onClick={() => onChange(h)}
+          >
+            {h}D
           </button>
         ))}
       </div>

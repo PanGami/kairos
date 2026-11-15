@@ -9,12 +9,19 @@ Go. Serves REST to the browser, enforces per-IP rate limiting, caches in Redis, 
 - `GET /v1/instruments/{id}/history`
 - `POST /v1/admin/refresh` (header `X-Admin-Api-Key`)
 
-## Current Stage
-Hello-world: `/healthz`, `/readyz` (checks ml-service), `/v1/instruments` (gRPC proxy).
-Rate limiting, Redis caching, and forecast/history/admin endpoints will follow.
+## Layout
 
-## Build
-Go proto stubs are generated during build (`protogen` stage), not committed.
+| Path | Responsibility |
+| --- | --- |
+| `cmd/gateway/main.go` | Process bootstrap, env wiring, graceful shutdown |
+| `internal/routes/` | Domain-split route registration (`health`, `instrument`, `forecast`, `admin`) |
+| `internal/handler/` | Thin HTTP request/response mapping and ETag caching |
+| `internal/services/` | Inter-service gRPC clients (`instrument.service.go`, `forecast.service.go`) |
+| `internal/cache/` | Minimal RESP2 Redis cache client |
+| `internal/middleware/` | Per-IP token-bucket rate limiter, CORS, `X-Request-Id`, JSON access logs |
+
+## Build & Test
+Go proto stubs are generated during build (`protogen` stage), not committed. Docker build runs `go test -v ./...` before compiling the static binary.
 ```bash
 docker build -f services/gateway/Dockerfile -t kairos-gateway .
 ```

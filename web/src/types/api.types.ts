@@ -3,6 +3,24 @@ export type ReliabilityTier = "full" | "low" | "insufficient";
 export type RunStatus = "ok" | "degraded" | "failed";
 export type Horizon = 7 | 30;
 
+export interface User {
+  user_id: string;
+  email: string;
+  name: string;
+  picture_url: string;
+}
+
+export interface AuthConfig {
+  google_client_id: string;
+  dev_login_enabled: boolean;
+}
+
+export interface SignInResponse {
+  user: User;
+  session_token: string;
+  expires_at: string;
+}
+
 export interface Instrument {
   instrument_id: string;
   symbol: string;

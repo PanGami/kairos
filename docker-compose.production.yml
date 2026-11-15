@@ -38,6 +38,17 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-kairos}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-kairos}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import grpc, os; from grpc_health.v1 import health_pb2, health_pb2_grpc; ch = grpc.insecure_channel('localhost:' + os.environ.get('ML_SERVICE_PORT', '50051')); stub = health_pb2_grpc.HealthStub(ch); assert stub.Check(health_pb2.HealthCheckRequest(service='kairos.forecast.v1.ForecastService'), timeout=2).status == health_pb2.HealthCheckResponse.SERVING",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,8 +74,26 @@ services:
       postgres:
         condition: service_healthy
       ml-service:
-        condition: service_started
+        condition: service_healthy
     restart: "no"
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-50052}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-kairos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-kairos}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      AUTH_DEV_BYPASS: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
   gateway:
     build:
@@ -74,12 +103,17 @@ services:
       GATEWAY_PORT: ${GATEWAY_PORT:-8080}
       ML_SERVICE_HOST: ${ML_SERVICE_HOST:-ml-service}
       ML_SERVICE_PORT: ${ML_SERVICE_PORT:-50051}
+      AUTH_SERVICE_HOST: ${AUTH_SERVICE_HOST:-auth-service}
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-50052}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      AUTH_DEV_BYPASS: "false"
       ADMIN_API_KEY: ${ADMIN_API_KEY}
       RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
     depends_on:
       - ml-service
+      - auth-service
       - redis
     restart: unless-stopped
 

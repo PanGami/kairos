@@ -1,8 +1,9 @@
 export function Disclaimer() {
   return (
     <p className="disclaimer">
-      KAIROS is an end-of-day risk monitor. It is not a price predictor and does not provide buy/sell signals or
-      investment advice. Ranges are statistical estimates and may be wrong.
+      KAIROS is an educational and statistical end-of-day risk monitor based on historical data and calibrated
+      uncertainty estimates. It does not constitute investment advice, buy or sell signals, or a solicitation to
+      trade any security.
     </p>
   );
 }

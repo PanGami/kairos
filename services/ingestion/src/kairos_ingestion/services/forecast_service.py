@@ -18,6 +18,7 @@ def trigger_forecasts(active_instruments: list[tuple[str, str, str, str, str]]) 
     if pb is None or pb_grpc is None:
         return
     with grpc.insecure_channel(config.ML_SERVICE_ADDR) as channel:
+        grpc.channel_ready_future(channel).result(timeout=30.0)
         stub = pb_grpc.ForecastServiceStub(channel)
         for inst_id, *_ in active_instruments:
             backfill = config.FORCE_BACKFILL or db.needs_backfill(inst_id)
