@@ -3,6 +3,6 @@ module github.com/kairos/gateway
 go 1.22
 
 require (
-	google.golang.org/grpc v1.60.1
+	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.32.0
 )

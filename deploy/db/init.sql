@@ -102,3 +102,25 @@ INSERT INTO instruments (instrument_id, symbol, provider_symbol, reliability_tie
   ('IDX:GOTO', 'GOTO', 'GOTO.JK', 'low'),
   ('IDX:DCII', 'DCII', 'DCII.JK', 'low')
 ON CONFLICT (instrument_id) DO NOTHING;
+
+-- Seed frozen model specifications from walk-forward evaluation (ADR-014, spec_version = 'v1').
+INSERT INTO model_specs (instrument_id, target, horizon, spec_version, theta, burn_in, reliability, wf_metrics) VALUES
+  ('IDX:TLKM', 'M1',  7, 'v1', NULL, 0,   'full', '{"interval":"naive+empirical","coverage80":0.7652,"width":0.1039}'::jsonb),
+  ('IDX:TLKM', 'M1', 30, 'v1', NULL, 0,   'full', '{"interval":"naive+empirical","coverage80":0.7522,"width":0.1985}'::jsonb),
+  ('IDX:TLKM', 'M2',  7, 'v1', NULL, 0,   'full', '{"model":"GARCH","qlike":0.5671,"rel_const":0.8774,"years_won":"5/5"}'::jsonb),
+  ('IDX:TLKM', 'M2', 30, 'v1', NULL, 0,   'full', '{"model":"GARCH","qlike":0.2974,"rel_const":0.9231,"years_won":"2/5"}'::jsonb),
+  ('IDX:TLKM', 'M3',  7, 'v1', 0.05, 0,   'full', '{"model":"vol_implied","brier":0.1601,"bss":0.0427,"auc":0.6177}'::jsonb),
+  ('IDX:TLKM', 'M3', 30, 'v1', 0.10, 0,   'full', '{"model":"vol_implied","brier":0.1946,"bss":0.0373,"auc":0.5107}'::jsonb),
+  ('IDX:GOTO', 'M1',  7, 'v1', NULL, 120, 'low',  '{"interval":"naive+empirical","coverage80":0.8936,"width":0.2339}'::jsonb),
+  ('IDX:GOTO', 'M1', 30, 'v1', NULL, 120, 'low',  '{"interval":"naive+empirical","coverage80":0.8889,"width":0.4693}'::jsonb),
+  ('IDX:GOTO', 'M2',  7, 'v1', NULL, 120, 'low',  '{"model":"const_var","qlike":1.7547,"rel_const":1.0000,"years_won":"3/3"}'::jsonb),
+  ('IDX:GOTO', 'M2', 30, 'v1', NULL, 120, 'low',  '{"model":"const_var","qlike":1.2322,"rel_const":1.0000,"years_won":"2/3"}'::jsonb),
+  ('IDX:GOTO', 'M3',  7, 'v1', 0.10, 120, 'low',  '{"model":"vol_implied","brier":0.1208,"bss":0.0695,"auc":0.6304}'::jsonb),
+  ('IDX:GOTO', 'M3', 30, 'v1', 0.20, 120, 'low',  '{"model":"vol_implied","brier":0.1678,"bss":-0.2528,"auc":0.4209}'::jsonb),
+  ('IDX:DCII', 'M1',  7, 'v1', NULL, 120, 'low',  '{"interval":"naive+empirical","coverage80":0.7692,"width":0.1280}'::jsonb),
+  ('IDX:DCII', 'M1', 30, 'v1', NULL, 120, 'low',  '{"interval":"naive+empirical","coverage80":0.7763,"width":0.3412}'::jsonb),
+  ('IDX:DCII', 'M2',  7, 'v1', NULL, 120, 'low',  '{"model":"const_var","qlike":2.3700,"rel_const":1.0000,"years_won":"4/4"}'::jsonb),
+  ('IDX:DCII', 'M2', 30, 'v1', NULL, 120, 'low',  '{"model":"const_var","qlike":1.3646,"rel_const":1.0000,"years_won":"3/4"}'::jsonb),
+  ('IDX:DCII', 'M3',  7, 'v1', 0.05, 120, 'low',  '{"model":"vol_implied","brier":0.2352,"bss":-0.1936,"auc":0.5362}'::jsonb),
+  ('IDX:DCII', 'M3', 30, 'v1', 0.10, 120, 'low',  '{"model":"vol_implied","brier":0.2649,"bss":-0.2590,"auc":0.5034}'::jsonb)
+ON CONFLICT (instrument_id, target, horizon, spec_version) DO NOTHING;

@@ -15,8 +15,10 @@
 		reverse_proxy gateway:8080
 	}
 
-	# Static frontend (will be mounted from web/dist later). For now, fallback to gateway.
+	# Static SPA (built by web/Dockerfile into /srv); unknown paths fall back to index.html.
 	handle {
-		reverse_proxy gateway:8080
+		root * /srv
+		try_files {path} /index.html
+		file_server
 	}
 }

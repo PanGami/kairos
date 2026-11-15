@@ -11,6 +11,7 @@ service ForecastService {
   // Read by gateway to serve the dashboard.
   rpc GetForecast(GetForecastRequest) returns (GetForecastResponse);
   rpc ListInstruments(ListInstrumentsRequest) returns (ListInstrumentsResponse);
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
 
   // Internal: triggered by ingestion/scheduler after daily data arrives.
   rpc ComputeForecast(ComputeForecastRequest) returns (ComputeForecastResponse);
@@ -115,4 +116,29 @@ message ComputeForecastResponse {
   RunStatus status = 2;
   int32 horizons_written = 3;
   string message = 4;
+}
+
+// ---- History (actual prices + walk-forward backtest) ----
+
+message GetHistoryRequest {
+  string instrument_id = 1;
+}
+
+message ActualPoint {
+  string date = 1;            // ISO date
+  double close = 2;           // adjusted close for continuous charting
+}
+
+message BacktestPoint {
+  string as_of_date = 1;      // forecast origin date
+  int32 horizon_days = 2;     // 7 or 30
+  double median = 3;
+  double lower80 = 4;
+  double upper80 = 5;
+}
+
+message GetHistoryResponse {
+  string instrument_id = 1;
+  repeated ActualPoint actual = 2;
+  repeated BacktestPoint backtest = 3;
 }

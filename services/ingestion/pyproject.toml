@@ -1,0 +1,25 @@
+[project]
+name = "kairos-ingestion"
+version = "0.1.0"
+description = "KAIROS ingestion job: yfinance + Kaggle repair rules -> prices_daily -> ml-service.ComputeForecast"
+requires-python = ">=3.11"
+dependencies = [
+  "grpcio>=1.60",
+  "numpy>=1.26",
+  "pandas>=2.1",
+  "pyarrow>=15.0",
+  "yfinance>=0.2.66",
+  "psycopg[binary]>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "grpcio-tools>=1.60",
+  "pytest>=8.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

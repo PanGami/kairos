@@ -28,10 +28,19 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
 - gateway: `api_keys` (admin only)
 - Cross-owner queries are FORBIDDEN. Gateway reads forecasts via gRPC, not SQL.
 
-## Engineering
+## Engineering & Code Organization (MANDATORY)
 
+- **Large-Scale Codebase Mindset**: Always architect and write code assuming this project will scale into a large codebase. Prioritize dynamic configuration over hardcoding, high human-readability, and strict Single Responsibility Principle (SRP) so no file ever grows into hundreds or thousands of lines.
 - Stateless, 12-factor, SIGTERM graceful shutdown, JSON logs to stdout, request-id propagated via gRPC metadata.
 - Non-root, multi-stage, version-tagged images. Health/readiness includes gRPC health.
+- **No Monolithic Files ("God Files")**: Never combine server bootstrap, routing, transport handlers, business/domain logic, inter-service communication, raw SQL/cache queries, and helper utilities into a single file. Keep files small, focused, and split by domain across every language in the stack (Go, Python, TypeScript/React):
+  - **Bootstrap / Entrypoint** (`main.go`, `server.py`, `main.tsx`): Process startup, env/config wiring, and graceful shutdown only — never define route tables or endpoint mappings here.
+  - **Routing Layer** (`routes/`, `routes/<domain>.routes.go`, `routes/<domain>.routes.ts`, `routes/<domain>_routes.py`): Dedicated `routes/` folder where URL/RPC route registrations (e.g., `mux.HandleFunc(...)`, router mounts) are split per domain/service (e.g., `instrument.routes.go`, `forecast.routes.go`, `admin.routes.go`, `health.routes.go`).
+  - **Transport / Handlers / UI** (`handler/`, `servicer.py`, `components/`): Thin HTTP/gRPC request-response mapping or UI rendering; delegates immediately to `services/`. No raw SQL, no direct external RPC wiring, and no heavy domain math.
+  - **Service & Inter-Service Communication Layer** (`services/<domain>.service.ts`, `services/<domain>.service.go`, `services/<domain>_service.py`): Dedicated `services/` folder per application where communication with other services (gRPC/REST clients, external providers) and domain orchestration are split per domain (e.g., `forecast.service.ts`, `instrument.service.ts`, `auth.service.ts`) — never cram all API/gRPC calls into one giant client or handler file.
+  - **Domain / Core Logic** (`forecast.py`, `validator.py`, `domain/`): Pure business, modeling, or validation logic, decoupled from I/O so it can be unit-tested in isolation.
+  - **Data Access / Repositories** (`db.py`, `repository/`, `cache/`): Database connections, SQL queries, and Redis operations, split by domain/table owner as queries grow.
+  - **Shared Service Utilities** (`config.py`, `middleware/`, `utils/`): Reusable within-service helpers (structured logging, request-id propagation, rate limiting) to prevent duplicate helper functions.
 
 ## Security (Repository Will Be Public)
 
