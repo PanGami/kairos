@@ -1,0 +1,79 @@
+# Base compose: used both locally AND in the cloud. Postgres/Redis DO NOT expose ports to the host
+# (NSG rules allow only 80/443). For local development, use docker-compose.override.yml.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  ml-service:
+    build:
+      context: .
+      dockerfile: services/ml-service/Dockerfile
+    environment:
+      ML_SERVICE_PORT: ${ML_SERVICE_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    environment:
+      GATEWAY_PORT: ${GATEWAY_PORT}
+      ML_SERVICE_HOST: ${ML_SERVICE_HOST}
+      ML_SERVICE_PORT: ${ML_SERVICE_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN}
+    depends_on:
+      - ml-service
+      - redis
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddydata:
+  caddyconfig:

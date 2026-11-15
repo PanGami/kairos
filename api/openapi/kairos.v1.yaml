@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: KAIROS Gateway API
+  version: 1.0.0
+  description: >
+    REST API served by the gateway to the browser. Read-only dashboard, public without login.
+    The only endpoint requiring an API key is POST /v1/admin/refresh.
+    The product is an end-of-day risk monitor, not investment advice.
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      responses:
+        "200": { description: OK }
+  /readyz:
+    get:
+      summary: Readiness probe (includes ml-service & DB connectivity)
+      responses:
+        "200": { description: Ready }
+        "503": { description: Not ready }
+  /v1/instruments:
+    get:
+      summary: List of instruments for dropdown
+      parameters:
+        - name: only_active
+          in: query
+          schema: { type: boolean, default: true }
+      responses:
+        "200":
+          description: List of instruments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instruments:
+                    type: array
+                    items: { $ref: "#/components/schemas/Instrument" }
+  /v1/instruments/{id}/forecast:
+    get:
+      summary: Stored forecast for a single instrument & horizon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          example: "IDX:TLKM"
+        - name: h
+          in: query
+          required: true
+          schema: { type: integer, enum: [7, 30] }
+      responses:
+        "200":
+          description: Forecast
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Forecast" }
+        "404": { description: Instrument or forecast not found }
+  /v1/instruments/{id}/history:
+    get:
+      summary: Historical actual prices + walk-forward series (backtest)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: History
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/History" }
+  /v1/admin/refresh:
+    post:
+      summary: Trigger ingestion + ComputeForecast (admin)
+      security:
+        - adminApiKey: []
+      responses:
+        "202": { description: Accepted }
+        "401": { description: Invalid API key }
+components:
+  securitySchemes:
+    adminApiKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Api-Key
+  schemas:
+    Instrument:
+      type: object
+      properties:
+        instrument_id: { type: string, example: "IDX:TLKM" }
+        symbol: { type: string }
+        currency: { type: string, example: "IDR" }
+        status: { type: string, enum: [active, paused, insufficient_data, delisted] }
+        reliability_tier: { type: string, enum: [full, low, insufficient] }
+    Volatility:
+      type: object
+      properties:
+        daily: { type: number }
+        annualized: { type: number }
+        lower: { type: number }
+        upper: { type: number }
+    CorrectionProbability:
+      type: object
+      properties:
+        theta: { type: number, example: 0.05 }
+        probability: { type: number, minimum: 0, maximum: 1 }
+        rolling_base_rate: { type: number }
+    PathPoint:
+      type: object
+      properties:
+        step: { type: integer }
+        median: { type: number }
+        lower80: { type: number }
+        upper80: { type: number }
+        lower95: { type: number }
+        upper95: { type: number }
+    Forecast:
+      type: object
+      properties:
+        instrument_id: { type: string }
+        horizon_days: { type: integer }
+        as_of_date: { type: string, format: date }
+        status: { type: string, enum: [ok, degraded, failed] }
+        reliability_tier: { type: string, enum: [full, low, insufficient] }
+        last_price: { type: number }
+        median: { type: number }
+        lower80: { type: number }
+        upper80: { type: number }
+        lower95: { type: number }
+        upper95: { type: number }
+        volatility: { $ref: "#/components/schemas/Volatility" }
+        correction: { $ref: "#/components/schemas/CorrectionProbability" }
+        path:
+          type: array
+          items: { $ref: "#/components/schemas/PathPoint" }
+        last_successful_update: { type: string, format: date-time }
+    History:
+      type: object
+      properties:
+        instrument_id: { type: string }
+        actual:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              close: { type: number }
+        backtest:
+          type: array
+          description: Walk-forward (out-of-sample), labeled distinctly from forward forecast
+          items:
+            type: object
+            properties:
+              as_of_date: { type: string, format: date }
+              horizon_days: { type: integer }
+              median: { type: number }
+              lower80: { type: number }
+              upper80: { type: number }

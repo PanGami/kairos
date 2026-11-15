@@ -1,0 +1,15 @@
+# LOCAL override only (automatically loaded by `docker compose up`).
+# Exposes ports for debugging. DO NOT use in cloud deployments.
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+  redis:
+    ports:
+      - "6379:6379"
+  ml-service:
+    ports:
+      - "50051:50051"
+  gateway:
+    ports:
+      - "8080:8080"
