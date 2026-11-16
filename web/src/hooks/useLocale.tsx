@@ -6,7 +6,7 @@ const STORAGE_KEY = "kairos-locale";
 function initialLocale(): Locale {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved === "en" || saved === "id") return saved;
-  return "en";
+  return "id";
 }
 
 interface LocaleContextValue {

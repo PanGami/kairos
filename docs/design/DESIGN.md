@@ -1,9 +1,9 @@
 # KAIROS: UI/UX & Frontend Design Specification
 
-Document version: 1.4  
+Document version: 1.5  
 Status: Binding Reference for Frontend Development  
 Companion documents: [AGENTS.md](../../AGENTS.md), [PRD.md](../prd/PRD.md), [ADR.md](../adr/ADR.md)  
-Layout, Color & Typography Reference: [Stockbit Desktop](https://stockbit.com/desktop) (Docked 3-Pane Financial Terminal, Matte Carbon Palette, Signature Emerald Accent, and Geometric Sans + Monospace Typography adapted strictly for End-of-Day Risk Monitoring)
+Layout, Color & Typography Reference: [Stockbit](https://stockbit.com/) & [Stockbit Desktop](https://stockbit.com/desktop) (5-Section Product Overview Dashboard, Docked 3-Pane Financial Terminal, Matte Carbon Palette, Signature Emerald Accent, and Geometric Sans + Monospace Typography adapted strictly for End-of-Day Risk Monitoring)
 
 ---
 
@@ -11,11 +11,11 @@ Layout, Color & Typography Reference: [Stockbit Desktop](https://stockbit.com/de
 
 KAIROS is an **end-of-day risk monitor** for equity markets (starting with IDX digital infrastructure equities), not a directional price predictor and not a source of buy/sell signals. Never introduce "real-time", "live trading signal", orderbooks, running trade feeds, or "enterprise" claims anywhere in UI copy or visual metaphors.
 
-- **Design Read**: Reading this as a quantitative equity risk monitor for IDX market participants, pairing a **Minimalist Single-Screen Overview (`/`)** with a **Docked 3-Pane Quantitative Terminal Watcher (`/watcher`)** inspired by Stockbit Desktop (`Matte Carbon` surfaces, `Signature Emerald` accent, and crisp `Plus Jakarta Sans` + `JetBrains Mono` typography), dial `ENERGY 2 / RHYTHM 2 / MOTION 2`.
+- **Design Read**: Reading this as a multi-section product overview dashboard (`/`) paired with a **Docked 3-Pane Quantitative Terminal Watcher (`/watcher`)** for IDX equity market participants, in a Stockbit-referenced `Matte Carbon` + `Signature Emerald` quantitative financial style, dial `ENERGY 2 / RHYTHM 3 / MOTION 2`.
 - **Dial Declaration**:
   - `ENERGY 2` (Balanced): Direct quantitative authority with clear visual hierarchy above the fold and zero marketing theatrics.
-  - `RHYTHM 2` (Consistent with asymmetric breaks): Overview `/` stacks 3 purposeful tiers (typographic masthead, asymmetric `1.2 : 1 : 1` `M1/M2/M3` ledger, action strip); Watcher `/watcher` divides a compact left **Emitter Watchlist**, center **Quote + EOD Chart**, and right **Cone + KeyStats + Calibration**.
-  - `MOTION 2` (Controlled hierarchical entrance + hover feedback): Overview `/` uses a single subtle top-to-bottom `stageReveal` entrance (`10px`, `420ms`, `0ms`/`90ms`/`180ms` stagger) to reinforce visual reading order without layout shift, disabled completely under `prefers-reduced-motion: reduce`.
+  - `RHYTHM 3` (Asymmetric, mixed compositions on `/`): Overview `/` flows across 5 distinct section structures (`Pemantau Risiko` split hero + device frame, `Khawatir Saham?` centered callout + 2-column horizon card, `Keuntungan` asymmetric `1.15fr 1fr 1fr` ledger, `Smart Warning` asymmetric alert stack, and `Key Features` interactive 2-column chart tour); Watcher `/watcher` divides a compact left **Emitter Watchlist**, center **Quote + EOD Chart**, and right **Cone + KeyStats + Calibration**.
+  - `MOTION 2` (Controlled entrance + interactive state transitions): Overview `/` uses subtle `stageReveal` entrances (`10px`, `420ms`, `0ms`/`90ms`/`180ms` stagger) plus interactive `Key Features` preview switching and `FooterInfoModal` transitions, disabled completely under `prefers-reduced-motion: reduce`.
 - **Identity Motif**: Docked 3-pane `1px`-bordered terminal workspace (`44px` uppercase widget header bars, Watchlist left pane, Quote + EOD Cone Chart center pane, and KeyStats + Model Calibration right pane) displaying empirical risk ranges above the fold.
 - **Themes**: **Dark Mode Default (*Stockbit Matte Carbon*)** (`#121212` canvas / `#181818` surface) for extended post-close analytical sessions, paired with a WCAG AA verified **Light Mode (*Stockbit Clean Daylight*)** (`#F4F6F8` canvas / `#FFFFFF` surface) toggle via a dedicated Sun/Moon icon control.
 
@@ -37,7 +37,7 @@ To preserve institutional clarity and WCAG 2.2 accessibility, **emoticons, emoji
 - **Emoticons / Emojis**: Zero emojis of any kind across headings, bullets, labels, or buttons.
 - **Standalone Dashes & Decorative Glyphs**: Never use em dashes (`--` / Unicode em dash), en dashes, bullet dots, checkmarks, crosses, stars, or arrows inside UI copy or labels. Always use colons, commas, parentheses, or `"to"` for numeric ranges (`1,900 to 2,172 IDR`).
 - **Decorative Status Dots**: Do not render colored dots beside non-live badges or headings.
-- **Brand Mark & Icon Scope Exception**: Functional SVG icons are permitted exclusively for the compact Sun/Moon theme switcher inside the header (`aria-label` required, `svg` marked `aria-hidden="true"`). Official brand identity assets use the transparent geometric "K" trajectory mark in `web/public/logo.png` (`28x28` rendered inside `.brand-group`, `alt=""`, `aria-hidden="true"` beside the `KAIROS` wordmark), accompanied by browser/app icons (`/favicon.png`, `/favicon.ico`, and `/apple-touch-icon.png`).
+- **Brand Mark & Icon Scope Exception**: Functional SVG icons are permitted exclusively for the compact Sun/Moon theme switcher inside the header and the LinkedIn/Instagram channel buttons in the footer (`aria-label` required, `svg` marked `aria-hidden="true"`). Official brand identity assets use the transparent geometric "K" trajectory mark in `web/public/logo.png` (`28x28` rendered inside `.brand-group`, `alt=""`, `aria-hidden="true"` beside the `KAIROS` wordmark), accompanied by browser/app icons (`/favicon.png`, `/favicon.ico`, and `/apple-touch-icon.png`).
 
 ### Approved Visual Replacements
 1. **Pure Typographic Status Pills**: Bordered monospace uppercase pills only where carrying real state:
@@ -121,21 +121,26 @@ Visitors land directly on the **Overview Dashboard (`/`)** without hitting a log
 
 ### 6.2 Page 1: Overview Dashboard (`/`)
 
-Structured as a calm, minimalist **Single-Screen Typographic Hierarchy (`max-width: 980px`)** flowing top-to-bottom across 3 visual tiers with subtle staged entrance (`stageReveal`):
+Structured as a **5-Section Stockbit-Referenced Overview Flow (`max-width: 1200px`)** defaulting to Indonesian (`id`) with full `EN | ID` switching via the topbar toggle:
 
 1. **Sticky Terminal Navigation Bar (`min-height: 56px`, wrapping cleanly on mobile)**:
-   - **Left**: `28x28` KAIROS "K" brand mark (`/logo.png`) paired with `KAIROS` wordmark + monospace tag `EOD RISK MONITOR` + live links (`Dashboard` `/`, `Watcher` `/watcher`, `Methodology` `/methodology`) visible across desktop, tablet, and mobile.
-   - **Right (Guest)**: Sun/Moon SVG theme icon button (`44x44px`, accessible label `"Switch to light mode"` / `"Switch to dark mode"`) + single Primary Emerald CTA `Sign In` (`/login`). Never duplicate `Sign In` and `Unlock Full Access` side by side.
-   - **Right (Authenticated)**: Sun/Moon theme icon button + `VERIFIED` status badge + user identity + Ghost `Sign Out` button.
-2. **Tier 1 (Top `.stage-1`): Pure Typographic Positioning**:
-   - **Headline (`<h1>`)**: `"Quantifying Post-Close Equity Uncertainty and Tail Risk."`
-   - **Summary Copy (`.overview-lead`)**: Two direct sentences constrained to `max-width: 54ch` with `text-wrap: pretty`, explaining why KAIROS computes nightly post-close intervals, conditional volatility regimes, and drawdown probabilities verified out-of-sample instead of price predictions or trading calls.
-3. **Tier 2 (Middle `.stage-2`): Unified Quantitative Pillar Ledger (`1.2fr 1fr 1fr`)**:
-   - Single `1px`-bordered horizontal bar pairing `M1 Empirical Price Range` (highlighted with `2px solid var(--core-cyan)` top bar), `M2 GARCH-t Volatility`, and `M3 Correction Probability` using inline monospace `.pillar-code` badges inside each `<h2>` (no `01 /` numeric prefixes, no eyebrow labels above headings, and no repetitive data tables).
-4. **Tier 3 (Bottom `.stage-3`): Action Launch Strip (`cta-launch-strip`)**:
-   - **Heading**: `"Ready to inspect interactive EOD price cones and trailing backtests?"`
-   - **Copy**: `"Guest mode grants immediate access to IDX:TLKM across 7-day and 30-day horizons inside Risk Watcher. Sign in with Google anytime to unlock all available stocks."`
-   - **Actions**: Primary Emerald CTA `Open Risk Watcher` (`/watcher`), Ghost `Read Methodology` (`/methodology`), and Secondary `Sign In with Google` (`/login` when guest).
+   - **Left**: `28x28` KAIROS "K" brand mark (`/logo.png`) paired with `KAIROS` wordmark + monospace tag `MONITOR RISIKO EOD` (`EOD RISK MONITOR`) + live links (`Dasbor`/`Dashboard` `/`, `Pemantau`/`Watcher` `/watcher`, `Metodologi`/`Methodology` `/methodology`) visible across desktop, tablet, and mobile.
+   - **Right (Guest)**: `EN | ID` locale toggle + Sun/Moon SVG theme icon button (`44x44px`, accessible label) + single Primary Emerald CTA `Masuk` (`Sign In`, `/login`).
+   - **Right (Authenticated)**: `EN | ID` locale toggle + Sun/Moon SVG theme icon button + `VERIFIED` / `TERVERIFIKASI` status badge + user identity + Ghost `Keluar` (`Sign Out`) button.
+2. **Section 1 (`Pemantau Risiko` / Hero `.dash-hero-section`)**:
+   - **Left (`1.08fr`)**: Headline `<h1>` (`Pemantau Risiko Saham Akhir Hari`), concise lead paragraph (`max-width: 52ch`), Primary CTA `Mulai Pantau Risiko` (`/watcher`), Ghost `Pelajari Metodologi` (`/methodology`), guest Secondary `Masuk dengan Google` (`/login`), quick-access horizon pills (`/watcher?horizon=7`, `/watcher?horizon=30`, `/methodology`), and audited data provenance strip (`SNAPSHOT EOD BURSA EFEK INDONESIA`, `UJI WALK-FORWARD BEBAS BOCOR DATA`, `SUMBER YFINANCE DAN AUDIT KAGGLE`).
+   - **Right (`0.92fr`)**: `<HeroWatcherPreview />` showing an upright terminal device preview (`IDX:TLKM`, `CONTOH PREVIEW`, SVG EOD cone mini-chart, illustrative `80%` range readout, and clickable emitter rows).
+3. **Section 2 (`Khawatir Saham?` `.dash-worry-section`)**:
+   - **Top Centered Callout**: `<h2>` (`Khawatir Saham Bergerak di Luar Ekspektasi?`), two giant monospace figures (`80%` and `95%`), and a `Keterangan:` / `Note:` explanation covering 750 trailing days, GARCH-t, and 252D base rate.
+   - **Bottom Split (`0.95fr 1.05fr`)**: Left `<WorryHorizonVisual />` (`7H` vs `30H` geometric cone matrix); Right `Akses Langsung 100% Terbuka untuk Saham Unggulan Tanpa Login` with actions to `/watcher` and `/login`.
+4. **Section 3 (`Keuntungan` `.dash-benefits-section`)**:
+   - Centered `<h2>` (`Keuntungan Memantau Risiko Bersama KAIROS`) above an asymmetric 3-column quantitative ledger (`1.15fr 1fr 1fr`) pairing `750H KUANTIL EMPIRIS` (`Lebih Objektif`, `2px solid var(--core-cyan)` primary top bar), `EMBARGO H-HARI` (`Lebih Transparan`), and `MODEL M1 / M2 / M3` (`Lebih Terukur`).
+5. **Section 4 (`Smart Warning` `.dash-warning-section`)**:
+   - **Left (`0.88fr`)**: `<h2>` `Smart Warning`, explanation of automated volatility, drawdown, and liquidity anomaly flagging, and link to `/watcher`.
+   - **Right (`1.12fr`)**: `<SmartWarningShowcase />` stacking three interactive diagnostic cards (`IDX:GOTO` 95-day zero-return plateau, `IDX:TLKM` M3 drawdown check, `IDX:DCII` 15.3% non-traded day filter) linking to `/watcher?ticker=...`.
+6. **Section 5 (`Key Features` `.dash-features-section`)**:
+   - **Left (`1.18fr`)**: `<KeyFeatureChartPreview />` displaying an interactive SVG uncertainty cone chart (`ACTUAL CLOSE`, `WALK-FORWARD`, `MEDIAN M1`, `80% BAND`, `95% TAIL`) and live quantitative telemetry strip.
+   - **Right (`0.82fr`)**: `<h2>` `Key Features` and 4 selectable buttons (`M1`, `M2`, `M3`, `Walk-Forward Audit`) that update the left preview in place, followed by Primary CTA `Buka Pemantau Risiko Interaktif` (`/watcher`).
 
 ---
 
@@ -171,7 +176,7 @@ Structured as a compact **Docked 3-Pane Quantitative Terminal Workspace** modele
 4. **Shared Footer**:
    - **Row 1 (System Provenance)**: `DATA AS OF EOD SNAPSHOT`, `LAST SUCCESSFUL UPDATE NIGHTLY BATCH`, `SOURCE YFINANCE AND KAGGLE AUDITED REPAIR`, `END-OF-DAY BATCH PIPELINE` separated by `1px` borders.
    - **Row 2 (Mandatory Risk Disclaimer)**: Clear statement that KAIROS is an educational/statistical end-of-day risk monitor, not investment advice or trading signals.
-   - **Row 3 (Navigation)**: Strictly links to live existing destinations (`Dashboard` `/`, `Watcher` `/watcher`, `Methodology` `/methodology`, and `Sign In` `/login` when guest). Zero links to unbuilt sections.
+   - **Row 3 (Stockbit-Referenced Footer Grid `.footer-main`)**: Left `KAIROS` mark and subtitle; Center 3 navigation columns (`About Me`, `Contact`, `Help`, `Terms` and `Kamus Saham`, `Privacy` opening `<FooterInfoModal />` with `Escape` support, plus direct route links `Dashboard`, `Watcher`, `Methodology`, and `Sign In` when guest); Right `LinkedIn` and `Instagram` accessible external profile links. Zero dead links.
 
 ---
 

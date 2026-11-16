@@ -1,5 +1,25 @@
 export type Locale = "en" | "id";
 
+export type FooterTopicKey =
+  | "about"
+  | "contact"
+  | "help"
+  | "terms"
+  | "glossary"
+  | "privacy"
+  | "social";
+
+export type DashboardFeatureKey = "m1" | "m2" | "m3" | "backtest";
+
+export interface FooterTopicContent {
+  title: string;
+  badge: string;
+  lead: string;
+  items: Array<{ label: string; body: string }>;
+  routeLabel?: string;
+  routeTo?: string;
+}
+
 export interface Messages {
   nav: {
     primaryAriaLabel: string;
@@ -23,24 +43,112 @@ export interface Messages {
     sourceAudit: string;
     pipelineTag: string;
     disclaimer: string;
+    brandSubtitle: string;
+    colInfoAriaLabel: string;
+    colResourcesAriaLabel: string;
+    socialAriaLabel: string;
+    closeDialog: string;
+    closeAriaLabel: string;
+    links: {
+      about: string;
+      contact: string;
+      help: string;
+      terms: string;
+      glossary: string;
+      privacy: string;
+      linkedinAriaLabel: string;
+      instagramAriaLabel: string;
+    };
+    topics: Record<FooterTopicKey, FooterTopicContent>;
   };
   dashboard: {
     heroAriaLabel: string;
-    headline: string;
+    heroTitlePrefix: string;
+    heroTitleAccent: string;
     lead: string;
-    pillarsAriaLabel: string;
-    pillars: Array<{
-      code: string;
+    openWatcher: string;
+    readMethodology: string;
+    signInGoogle: string;
+    heroQuickLinksAriaLabel: string;
+    heroQuickLinks: Array<{ label: string; to: string }>;
+    heroProvenanceTitle: string;
+    heroProvenanceItems: string[];
+    heroPreview: {
+      ariaLabel: string;
+      headerTag: string;
+      sampleTag: string;
+      ticker: string;
+      mic: string;
+      tier: string;
+      featured: string;
+      range80Label: string;
+      range80SampleValue: string;
+      sampleNote: string;
+      watchlistTitle: string;
+      watchlistRows: Array<{ ticker: string; tier: string; tone: "verified" | "warning" }>;
+      ctaLink: string;
+    };
+    worryAriaLabel: string;
+    worryTitle: string;
+    worryMetrics: Array<{ label: string; value: string; sub: string }>;
+    worryNoteLabel: string;
+    worryNoteText: string;
+    worryHighlightTitle: string;
+    worryHighlightDesc: string;
+    worryVisual: {
+      badge: string;
+      horizon7Label: string;
+      horizon7Desc: string;
+      horizon30Label: string;
+      horizon30Desc: string;
+      windowLabel: string;
+      auditLabel: string;
+    };
+    benefitsAriaLabel: string;
+    benefitsTitle: string;
+    benefits: Array<{
+      badge: string;
       title: string;
       desc: string;
       primary: boolean;
     }>;
-    ctaAriaLabel: string;
-    ctaTitle: string;
-    ctaDesc: string;
-    openWatcher: string;
-    readMethodology: string;
-    signInGoogle: string;
+    warningAriaLabel: string;
+    warningTitle: string;
+    warningDesc: string;
+    warningAction: string;
+    warningShowcaseAriaLabel: string;
+    warningShowcaseHeader: string;
+    warningCards: Array<{
+      ticker: string;
+      status: string;
+      tone: "warning" | "verified";
+      title: string;
+      detail: string;
+    }>;
+    featuresAriaLabel: string;
+    featuresTitle: string;
+    featuresListAriaLabel: string;
+    features: Array<{
+      id: DashboardFeatureKey;
+      code: string;
+      label: string;
+      desc: string;
+      previewTag: string;
+      previewHeadline: string;
+      previewPrimaryLabel: string;
+      previewPrimaryValue: string;
+      previewMetrics: Array<{ label: string; value: string }>;
+    }>;
+    featuresPreviewAriaLabel: string;
+    featuresPreviewSampleBadge: string;
+    featuresChartLegend: {
+      actual: string;
+      backtest: string;
+      median: string;
+      band80: string;
+      band95: string;
+    };
+    ctaWatcherFinal: string;
   };
   watcher: {
     loadingInstruments: string;
@@ -204,40 +312,360 @@ const en: Messages = {
     pipelineTag: "END-OF-DAY BATCH PIPELINE",
     disclaimer:
       "KAIROS is an educational and statistical end-of-day risk monitor based on historical data and calibrated uncertainty estimates. It does not constitute investment advice, buy or sell signals, or a solicitation to trade any security.",
+    brandSubtitle: "CALIBRATED END-OF-DAY RISK MONITOR",
+    colInfoAriaLabel: "Platform information",
+    colResourcesAriaLabel: "Documentation and privacy",
+    socialAriaLabel: "Social profiles",
+    closeDialog: "Close",
+    closeAriaLabel: "Close information dialog",
+    links: {
+      about: "About Me",
+      contact: "Contact",
+      help: "Help",
+      terms: "Terms",
+      glossary: "Stock Glossary",
+      privacy: "Privacy",
+      linkedinAriaLabel: "KAIROS LinkedIn profile information",
+      instagramAriaLabel: "KAIROS Instagram profile information",
+    },
+    topics: {
+      about: {
+        title: "About Me and KAIROS",
+        badge: "PROJECT PROFILE",
+        lead: "KAIROS is built and maintained as an open, quantitative end-of-day equity risk monitor focused on Indonesian digital infrastructure stocks (IDX:TLKM, IDX:GOTO, IDX:DCII).",
+        items: [
+          {
+            label: "Maintainer",
+            body: "Developed by PanGami and KAIROS contributors under the MIT open-source license.",
+          },
+          {
+            label: "Core Architecture",
+            body: "Split-ready monorepo combining a React + TypeScript dashboard, Go REST gateway, Python gRPC ml-service, and nightly EOD ingestion pipeline.",
+          },
+          {
+            label: "Design Mandate",
+            body: "Quantify uncertainty and tail risk after market close instead of publishing price targets or buy and sell recommendations.",
+          },
+        ],
+        routeLabel: "Read Full Methodology",
+        routeTo: "/methodology",
+      },
+      contact: {
+        title: "Contact and Feedback",
+        badge: "MAINTAINER CHANNEL",
+        lead: "Questions on statistical methodology, data audits, or bug reports can be directed through the project repository or maintainer contact channel.",
+        items: [
+          {
+            label: "Repository Maintainer",
+            body: "PanGami (KAIROS End-of-Day Risk Monitor).",
+          },
+          {
+            label: "Direct Email",
+            body: "[PLACEHOLDER: maintainer contact email not yet configured for public deployment]",
+          },
+          {
+            label: "Issue Reporting",
+            body: "Document the affected ticker, horizon (7D or 30D), and EOD snapshot date when reporting calibration anomalies.",
+          },
+        ],
+      },
+      help: {
+        title: "How to Read KAIROS",
+        badge: "USER GUIDE",
+        lead: "Follow three steps inside Risk Watcher to read empirical price cones and volatility regimes without confusing them with trading signals.",
+        items: [
+          {
+            label: "1. Select Emitter and Horizon",
+            body: "Guest sessions display IDX:TLKM across 7-day and 30-day trading horizons. Sign in with Google to inspect IDX:GOTO and IDX:DCII.",
+          },
+          {
+            label: "2. Inspect 80% and 95% Bands",
+            body: "The dashed emerald 80% interval reflects typical trailing return dispersion, while the dotted amber 95% line marks historical tail bounds.",
+          },
+          {
+            label: "3. Check Reliability Status",
+            body: "Watch for LOW RELIABILITY or DEGRADED status banners on thin-liquidity equities where M2 falls back to constant long-run variance.",
+          },
+        ],
+        routeLabel: "Open Risk Watcher",
+        routeTo: "/watcher",
+      },
+      terms: {
+        title: "Terms of Use",
+        badge: "EDUCATIONAL USE ONLY",
+        lead: "KAIROS outputs are provided strictly for statistical education and quantitative risk research under the MIT License.",
+        items: [
+          {
+            label: "No Investment Advice",
+            body: "KAIROS does not provide financial advice, personalized recommendations, or buy and sell signals for any security.",
+          },
+          {
+            label: "Third-Party Data Attribution",
+            body: "Historical daily closes rely on Yahoo Finance (yfinance) and audited Kaggle IDX snapshots. Neither source is re-licensed by KAIROS.",
+          },
+          {
+            label: "Statistical Limitations",
+            body: "Non-stationary market regimes, zero-volume days, and corporate actions such as dividends can affect empirical interval coverage.",
+          },
+        ],
+      },
+      glossary: {
+        title: "Stock and Risk Glossary",
+        badge: "QUANTITATIVE TERMS",
+        lead: "Key statistical and IDX market terms displayed across the KAIROS Dashboard and Risk Watcher terminal.",
+        items: [
+          {
+            label: "M1 Empirical Price Cone",
+            body: "A flat random-walk midpoint anchored at the latest EOD close, surrounded by 80% and 95% return quantiles from trailing 750 trading days.",
+          },
+          {
+            label: "M2 GARCH-t Volatility",
+            body: "Conditional volatility model capturing fat-tailed daily dispersion and volatility clustering, evaluated via QLIKE.",
+          },
+          {
+            label: "M3 Correction Probability",
+            body: "Estimated likelihood that price drops past frozen drawdown threshold theta within 7D or 30D, compared with the 252-day rolling base rate.",
+          },
+          {
+            label: "Walk-Forward Embargo",
+            body: "Out-of-sample backtest protocol enforcing an h-day label-overlap embargo so future prices never leak into historical forecasts.",
+          },
+        ],
+        routeLabel: "Inspect Full Specs",
+        routeTo: "/methodology",
+      },
+      privacy: {
+        title: "Privacy and Session Handling",
+        badge: "DATA MINIMIZATION",
+        lead: "Public risk views require no login. Authentication applies only when unlocking the full emitter watchlist.",
+        items: [
+          {
+            label: "Guest Access",
+            body: "Viewing the Dashboard, Methodology, and IDX:TLKM in Risk Watcher sets no tracking cookies and requires no personal data.",
+          },
+          {
+            label: "Google Sign-In Sessions",
+            body: "When signing in, KAIROS stores only your verified user identity and session token locally to authorize watchlist requests.",
+          },
+          {
+            label: "Theme and Locale Preferences",
+            body: "Light or dark mode and EN/ID language choices remain strictly inside your browser localStorage.",
+          },
+        ],
+      },
+      social: {
+        title: "LinkedIn and Instagram Profiles",
+        badge: "SOCIAL CHANNELS",
+        lead: "Connect with the KAIROS maintainer through the official LinkedIn and Instagram profiles.",
+        items: [
+          {
+            label: "LinkedIn",
+            body: "https://www.linkedin.com/in/panca-nugraha-wicaksana/",
+          },
+          {
+            label: "Instagram",
+            body: "https://www.instagram.com/pangami_",
+          },
+          {
+            label: "Platform Status",
+            body: "You can verify all live risk models and methodology documentation directly inside the application.",
+          },
+        ],
+      },
+    },
   },
   dashboard: {
-    heroAriaLabel: "KAIROS platform overview",
-    headline: "Quantifying Post-Close Equity Uncertainty and Tail Risk.",
+    heroAriaLabel: "KAIROS risk monitor overview",
+    heroTitlePrefix: "Calibrated End-of-Day",
+    heroTitleAccent: "Equity Risk Monitor",
     lead:
-      "KAIROS is an end-of-day risk intelligence system for IDX digital infrastructure equities. Instead of speculative price targets or buy and sell signals, it calibrates nightly forward uncertainty cones, conditional volatility regimes, and drawdown probabilities verified through leak-free walk-forward backtesting.",
-    pillarsAriaLabel: "Three calibrated risk models",
-    pillars: [
-      {
-        code: "M1",
-        title: "Empirical Price Range",
-        desc: "Anchors the midpoint at the latest closing price and projects 80% and 95% forward return intervals over 7-day and 30-day horizons.",
-        primary: true,
-      },
-      {
-        code: "M2",
-        title: "GARCH-t Volatility",
-        desc: "Estimates time-varying daily and annualized return dispersion, with automatic long-run variance fallback on thin-liquidity stocks.",
-        primary: false,
-      },
-      {
-        code: "M3",
-        title: "Correction Probability",
-        desc: "Quantifies the likelihood of a drawdown crossing threshold theta within the active horizon against the 252-day rolling base rate.",
-        primary: false,
-      },
-    ],
-    ctaAriaLabel: "Open interactive risk watcher",
-    ctaTitle: "Ready to inspect interactive EOD price cones and trailing backtests?",
-    ctaDesc:
-      "Guest mode grants immediate access to IDX:TLKM across 7-day and 30-day horizons inside Risk Watcher. Sign in with Google anytime to unlock all available stocks.",
+      "KAIROS helps you evaluate post-close price uncertainty intervals, conditional volatility regimes, and drawdown probabilities for IDX equities in one workspace without speculative buy or sell noise.",
     openWatcher: "Open Risk Watcher",
     readMethodology: "Read Methodology",
     signInGoogle: "Sign In with Google",
+    heroQuickLinksAriaLabel: "Quick workspace views",
+    heroQuickLinks: [
+      { label: "7D EMPIRICAL CONE", to: "/watcher?horizon=7" },
+      { label: "30D EMPIRICAL CONE", to: "/watcher?horizon=30" },
+      { label: "WALK-FORWARD AUDIT", to: "/methodology" },
+    ],
+    heroProvenanceTitle: "Audited Methodology and Data Sources",
+    heroProvenanceItems: [
+      "IDX EOD SNAPSHOT",
+      "LEAK-FREE WALK-FORWARD TEST",
+      "YFINANCE AND KAGGLE AUDITED",
+    ],
+    heroPreview: {
+      ariaLabel: "KAIROS Risk Watcher workspace preview",
+      headerTag: "RISK WATCHER PREVIEW",
+      sampleTag: "SAMPLE PREVIEW",
+      ticker: "IDX:TLKM",
+      mic: "XIDX",
+      tier: "FULL TIER",
+      featured: "FEATURED TODAY",
+      range80Label: "80% EMPIRICAL RANGE (7D SAMPLE)",
+      range80SampleValue: "2,680 to 2,940 IDR",
+      sampleNote: "Illustrative range preview. Open Risk Watcher for live gateway EOD snapshots.",
+      watchlistTitle: "EMITTER WATCHLIST",
+      watchlistRows: [
+        { ticker: "IDX:TLKM", tier: "FULL TIER", tone: "verified" },
+        { ticker: "IDX:GOTO", tier: "LOW RELIABILITY", tone: "warning" },
+        { ticker: "IDX:DCII", tier: "LOW RELIABILITY", tone: "warning" },
+      ],
+      ctaLink: "Inspect Live EOD Cone",
+    },
+    worryAriaLabel: "Post-close risk bounds overview",
+    worryTitle: "Concerned About Post-Close Price Swings?",
+    worryMetrics: [
+      {
+        label: "Core Empirical Band",
+        value: "80%",
+        sub: "Typical 7D and 30D dispersion interval",
+      },
+      {
+        label: "Tail Risk Boundary",
+        value: "95%",
+        sub: "Historical extreme dispersion boundary",
+      },
+    ],
+    worryNoteLabel: "Note:",
+    worryNoteText:
+      "Intervals are calibrated nightly after market close from trailing 750-trading-day return distributions, GARCH-t conditional volatility (M2), and 252-day rolling correction base rates.",
+    worryHighlightTitle: "100% Open Guest Access for Featured Equities Without Sign-In",
+    worryHighlightDesc:
+      "Inspect interactive EOD price cones and historical walk-forward backtests for IDX:TLKM directly inside Risk Watcher. Sign in with Google anytime to unlock every emitter on the watchlist.",
+    worryVisual: {
+      badge: "NIGHTLY BATCH CALIBRATION",
+      horizon7Label: "7D HORIZON",
+      horizon7Desc: "Short-term post-close cone",
+      horizon30Label: "30D HORIZON",
+      horizon30Desc: "Monthly regime dispersion",
+      windowLabel: "750D TRAILING QUANTILES",
+      auditLabel: "H-DAY EMBARGO VERIFIED",
+    },
+    benefitsAriaLabel: "Advantages of monitoring risk with KAIROS",
+    benefitsTitle: "Advantages of Monitoring Risk with KAIROS",
+    benefits: [
+      {
+        badge: "750D EMPIRICAL QUANTILES",
+        title: "More Objective",
+        desc: "Ground your evaluation in observed return distributions and statistical calibration rather than market rumors or arbitrary price targets.",
+        primary: true,
+      },
+      {
+        badge: "H-DAY EMBARGO",
+        title: "More Transparent",
+        desc: "Every projection overlays out-of-sample walk-forward backtest medians and reliability status directly onto trailing closing prices.",
+        primary: false,
+      },
+      {
+        badge: "MODELS M1 / M2 / M3",
+        title: "More Measured",
+        desc: "Separate routine market dispersion (80% band) from tail correction risk (95% boundary and M3 threshold) before sizing portfolio exposure.",
+        primary: false,
+      },
+    ],
+    warningAriaLabel: "Smart Warning diagnostic system",
+    warningTitle: "Smart Warning",
+    warningDesc:
+      "Works like an automated risk diagnostic that flags when conditional volatility shifts, drawdown probability climbs above its 252-day base rate, or thin liquidity degrades statistical reliability.",
+    warningAction: "Inspect Active Alerts in Watcher",
+    warningShowcaseAriaLabel: "Live diagnostic warning examples",
+    warningShowcaseHeader: "NIGHTLY DIAGNOSTIC ENGINE",
+    warningCards: [
+      {
+        ticker: "IDX:GOTO",
+        status: "LOW RELIABILITY",
+        tone: "warning",
+        title: "95-Day Zero-Return Plateau Detected",
+        detail: "Model M2 automatically falls back to constant long-run variance so stagnant closes do not distort volatility.",
+      },
+      {
+        ticker: "IDX:TLKM",
+        status: "FULL TIER",
+        tone: "verified",
+        title: "M3 Drawdown Probability Check (7D)",
+        detail: "Compares correction likelihood past frozen threshold theta against the 252-day rolling historical base rate.",
+      },
+      {
+        ticker: "IDX:DCII",
+        status: "LOW RELIABILITY",
+        tone: "warning",
+        title: "15.3% Non-Traded Days Flagged",
+        detail: "Retains zero-volume sessions with an is_traded flag so interval bounds remain auditable.",
+      },
+    ],
+    featuresAriaLabel: "KAIROS Key Features",
+    featuresTitle: "Key Features",
+    featuresListAriaLabel: "Select a feature to preview",
+    features: [
+      {
+        id: "m1",
+        code: "M1",
+        label: "EMPIRICAL PRICE CONE (M1)",
+        desc: "Visualizes latest EOD close midpoints with trailing 80% and 95% empirical intervals across 7-day and 30-day horizons.",
+        previewTag: "MODEL M1 ACTIVE",
+        previewHeadline: "750-Day Trailing Empirical Quantiles",
+        previewPrimaryLabel: "CALIBRATED BANDS",
+        previewPrimaryValue: "80% Core / 95% Tail",
+        previewMetrics: [
+          { label: "Anchor", value: "Latest EOD Close" },
+          { label: "Horizons", value: "7D and 30D" },
+        ],
+      },
+      {
+        id: "m2",
+        code: "M2",
+        label: "GARCH-T VOLATILITY REGIME (M2)",
+        desc: "Tracks time-varying daily and annualized return dispersion validated via QLIKE, with automatic fallback on thin liquidity.",
+        previewTag: "MODEL M2 ACTIVE",
+        previewHeadline: "Conditional Volatility and Fallback Guard",
+        previewPrimaryLabel: "TLKM QLIKE REL_CONST",
+        previewPrimaryValue: "0.877 (7D) / 0.923 (30D)",
+        previewMetrics: [
+          { label: "Distribution", value: "Student-t GARCH" },
+          { label: "Fallback", value: "Long-Run / EWMA" },
+        ],
+      },
+      {
+        id: "m3",
+        code: "M3",
+        label: "DRAWDOWN PROBABILITY MONITOR (M3)",
+        desc: "Quantifies the likelihood of a correction crossing frozen threshold theta benchmarked against the 252-day rolling base rate.",
+        previewTag: "MODEL M3 ACTIVE",
+        previewHeadline: "Volatility-Implied Tail Risk",
+        previewPrimaryLabel: "TLKM 7D SKILL (BSS)",
+        previewPrimaryValue: "+0.043 vs Base Rate",
+        previewMetrics: [
+          { label: "Threshold Rule", value: "0.85 x sigma x sqrt(h)" },
+          { label: "Benchmark", value: "252D Base Rate" },
+        ],
+      },
+      {
+        id: "backtest",
+        code: "WF",
+        label: "WALK-FORWARD BACKTEST AUDIT",
+        desc: "Overlays historical out-of-sample medians directly over actual closing prices with an h-day embargo to verify zero leakage.",
+        previewTag: "WALK-FORWARD VERIFIED",
+        previewHeadline: "Leak-Free Out-of-Sample Check",
+        previewPrimaryLabel: "EMBARGO POLICY",
+        previewPrimaryValue: "h-Day Label Separation",
+        previewMetrics: [
+          { label: "30D Windows", value: "35 to 55 per ticker" },
+          { label: "Permutation Check", value: "Matches Naive Baseline" },
+        ],
+      },
+    ],
+    featuresPreviewAriaLabel: "Interactive feature chart preview",
+    featuresPreviewSampleBadge: "ILLUSTRATIVE CONE DIAGRAM",
+    featuresChartLegend: {
+      actual: "ACTUAL CLOSE",
+      backtest: "WALK-FORWARD",
+      median: "MEDIAN M1",
+      band80: "80% BAND",
+      band95: "95% TAIL",
+    },
+    ctaWatcherFinal: "Open Interactive Risk Watcher",
   },
   watcher: {
     loadingInstruments: "Loading active instrument universe from gateway...",
@@ -504,40 +932,360 @@ const id: Messages = {
     pipelineTag: "PIPELINE BATCH AKHIR HARI",
     disclaimer:
       "KAIROS adalah monitor risiko akhir hari yang bersifat edukatif dan statistik berbasis data historis serta estimasi ketidakpastian terkalibrasi. Layanan ini bukan saran investasi, sinyal beli atau jual, maupun ajakan bertransaksi efek.",
+    brandSubtitle: "MONITOR RISIKO AKHIR HARI TERKALIBRASI",
+    colInfoAriaLabel: "Informasi platform",
+    colResourcesAriaLabel: "Dokumentasi dan privasi",
+    socialAriaLabel: "Profil media sosial",
+    closeDialog: "Tutup",
+    closeAriaLabel: "Tutup jendela informasi",
+    links: {
+      about: "Tentang Saya",
+      contact: "Kontak",
+      help: "Bantuan",
+      terms: "Ketentuan",
+      glossary: "Kamus Saham",
+      privacy: "Privasi",
+      linkedinAriaLabel: "Informasi profil LinkedIn KAIROS",
+      instagramAriaLabel: "Informasi profil Instagram KAIROS",
+    },
+    topics: {
+      about: {
+        title: "Tentang Pengembang dan KAIROS",
+        badge: "PROFIL PROYEK",
+        lead: "KAIROS dibangun dan dikelola sebagai pemantau risiko ekuitas akhir hari berbasis statistik terbuka untuk saham infrastruktur digital BEI (IDX:TLKM, IDX:GOTO, IDX:DCII).",
+        items: [
+          {
+            label: "Pengelola",
+            body: "Dikembangkan oleh PanGami dan kontributor KAIROS di bawah lisensi sumber terbuka MIT.",
+          },
+          {
+            label: "Arsitektur Inti",
+            body: "Monorepo siap-pisah yang memadukan dasbor React + TypeScript, gateway REST Go, layanan gRPC ml-service Python, dan pipeline ingesti EOD malam.",
+          },
+          {
+            label: "Mandat Desain",
+            body: "Mengukur ketidakpastian dan risiko ekor setelah penutupan pasar, bukan menerbitkan target harga atau rekomendasi beli dan jual.",
+          },
+        ],
+        routeLabel: "Baca Metodologi Lengkap",
+        routeTo: "/methodology",
+      },
+      contact: {
+        title: "Kontak dan Masukan",
+        badge: "KANAL PENGELOLA",
+        lead: "Pertanyaan mengenai metodologi statistik, audit data historis, atau laporan kendala teknis dapat disampaikan melalui kanal repositori maupun kontak pengelola.",
+        items: [
+          {
+            label: "Pengelola Repositori",
+            body: "PanGami (KAIROS End-of-Day Risk Monitor).",
+          },
+          {
+            label: "Email Langsung",
+            body: "[PLACEHOLDER: email kontak pengelola belum dikonfigurasi untuk rilis publik]",
+          },
+          {
+            label: "Format Laporan Kendala",
+            body: "Sertakan kode emiten, horizon (7H atau 30H), dan tanggal snapshot EOD saat melaporkan anomali kalibrasi.",
+          },
+        ],
+      },
+      help: {
+        title: "Panduan Membaca KAIROS",
+        badge: "PANDUAN PENGGUNA",
+        lead: "Ikuti tiga langkah di Pemantau Risiko untuk membaca kerucut harga empiris dan rezim volatilitas secara tepat.",
+        items: [
+          {
+            label: "1. Pilih Emiten dan Horizon",
+            body: "Mode tamu menampilkan IDX:TLKM untuk horizon 7 hari dan 30 hari bursa. Masuk dengan Google untuk memeriksa IDX:GOTO dan IDX:DCII.",
+          },
+          {
+            label: "2. Periksa Pita 80% dan 95%",
+            body: "Garis putus-putus emerald 80% menunjukkan dispersi imbal hasil historis yang umum terjadi, sedangkan garis titik-titik amber 95% menandai batas risiko ekor.",
+          },
+          {
+            label: "3. Cek Status Reliabilitas",
+            body: "Perhatikan penanda RELIABILITAS RENDAH atau TERDEGRADASI pada saham berlikuiditas tipis saat M2 beralih ke varians jangka panjang konstan.",
+          },
+        ],
+        routeLabel: "Buka Pemantau Risiko",
+        routeTo: "/watcher",
+      },
+      terms: {
+        title: "Ketentuan Penggunaan",
+        badge: "EDUKASI DAN RISET",
+        lead: "Seluruh keluaran KAIROS disediakan semata-mata untuk edukasi statistik dan riset risiko kuantitatif di bawah Lisensi MIT.",
+        items: [
+          {
+            label: "Bukan Saran Investasi",
+            body: "KAIROS tidak memberikan nasihat keuangan, rekomendasi pribadi, ataupun sinyal beli dan jual untuk efek apa pun.",
+          },
+          {
+            label: "Atribusi Data Pihak Ketiga",
+            body: "Data penutupan harian historis bersumber dari Yahoo Finance (yfinance) dan snapshot teraudit Kaggle BEI tanpa lisensi ulang oleh KAIROS.",
+          },
+          {
+            label: "Batasan Statistik",
+            body: "Perubahan rezim pasar non-stasioner, hari tanpa transaksi, dan aksi korporasi seperti dividen dapat memengaruhi cakupan interval empiris.",
+          },
+        ],
+      },
+      glossary: {
+        title: "Kamus Saham dan Istilah Risiko",
+        badge: "GLOSARIUM KUANTITATIF",
+        lead: "Daftar istilah statistik dan pasar modal BEI yang ditampilkan pada Dasbor serta terminal Pemantau Risiko KAIROS.",
+        items: [
+          {
+            label: "Kerucut Harga Empiris (M1)",
+            body: "Titik tengah random-walk datar yang dijangkarkan pada penutupan EOD terbaru, diapit kuantil imbal hasil 80% dan 95% dari 750 hari bursa terakhir.",
+          },
+          {
+            label: "Volatilitas GARCH-t (M2)",
+            body: "Model volatilitas bersyarat untuk menangkap klastering volatilitas dan ekor distribusi tebal, teruji melalui metrik QLIKE.",
+          },
+          {
+            label: "Probabilitas Koreksi (M3)",
+            body: "Estimasi peluang penurunan harga menembus ambang drawdown beku theta dalam 7H atau 30H, dibandingkan terhadap tingkat dasar bergulir 252 hari.",
+          },
+          {
+            label: "Embargo Walk-Forward",
+            body: "Protokol uji historis di luar sampel dengan pemisahan label h-hari agar data masa depan tidak pernah bocor ke prediksi masa lalu.",
+          },
+        ],
+        routeLabel: "Lihat Spesifikasi Model",
+        routeTo: "/methodology",
+      },
+      privacy: {
+        title: "Privasi dan Pengelolaan Sesi",
+        badge: "MINIMALISASI DATA",
+        lead: "Tampilan pemantau risiko publik dapat diakses tanpa login. Autentikasi hanya berlaku saat Anda membuka daftar pantau emiten lengkap.",
+        items: [
+          {
+            label: "Akses Mode Tamu",
+            body: "Membaca Dasbor, Metodologi, dan IDX:TLKM di Pemantau Risiko tidak memasang pelacak dan tidak memerlukan data pribadi.",
+          },
+          {
+            label: "Sesi Masuk Google",
+            body: "Saat Anda masuk, KAIROS hanya menyimpan identitas terverifikasi dan token sesi di peramban untuk mengotorisasi permintaan daftar pantau.",
+          },
+          {
+            label: "Preferensi Tema dan Bahasa",
+            body: "Pilihan mode gelap atau terang serta bahasa ID/EN disimpan sepenuhnya di localStorage peramban Anda.",
+          },
+        ],
+      },
+      social: {
+        title: "Profil LinkedIn dan Instagram",
+        badge: "KANAL SOSIAL",
+        lead: "Terhubung dengan pengelola KAIROS melalui profil resmi LinkedIn dan Instagram.",
+        items: [
+          {
+            label: "LinkedIn",
+            body: "https://www.linkedin.com/in/panca-nugraha-wicaksana/",
+          },
+          {
+            label: "Instagram",
+            body: "https://www.instagram.com/pangami_",
+          },
+          {
+            label: "Status Dokumentasi",
+            body: "Anda dapat meninjau seluruh model risiko dan catatan keterbatasan statistik langsung di halaman Metodologi.",
+          },
+        ],
+      },
+    },
   },
   dashboard: {
-    heroAriaLabel: "Ringkasan platform KAIROS",
-    headline: "Mengukur Ketidakpastian Ekuitas dan Risiko Ekor Pasca-Penutupan.",
+    heroAriaLabel: "Ringkasan pemantau risiko KAIROS",
+    heroTitlePrefix: "Pemantau Risiko",
+    heroTitleAccent: "Saham Akhir Hari",
     lead:
-      "KAIROS adalah sistem intelijen risiko akhir hari untuk saham infrastruktur digital BEI. Alih-alih target harga spekulatif atau sinyal beli dan jual, sistem ini mengkalibrasi kerucut ketidakpastian ke depan setiap malam, rezim volatilitas bersyarat, dan probabilitas penurunan yang terverifikasi melalui backtesting walk-forward bebas kebocoran data.",
-    pillarsAriaLabel: "Tiga model risiko terkalibrasi",
-    pillars: [
+      "KAIROS membantu Anda mengukur rentang ketidakpastian harga pasca-penutupan bursa, rezim volatilitas harian, dan peluang koreksi saham BEI dalam satu tempat tanpa kebisingan sinyal beli atau jual spekulatif.",
+    openWatcher: "Mulai Pantau Risiko",
+    readMethodology: "Pelajari Metodologi",
+    signInGoogle: "Masuk dengan Google",
+    heroQuickLinksAriaLabel: "Pintasan ruang kerja",
+    heroQuickLinks: [
+      { label: "KERUCUT 7H EMPIRIS", to: "/watcher?horizon=7" },
+      { label: "KERUCUT 30H EMPIRIS", to: "/watcher?horizon=30" },
+      { label: "AUDIT WALK-FORWARD", to: "/methodology" },
+    ],
+    heroProvenanceTitle: "Metodologi dan Sumber Data Teraudit",
+    heroProvenanceItems: [
+      "SNAPSHOT EOD BURSA EFEK INDONESIA",
+      "UJI WALK-FORWARD BEBAS BOCOR DATA",
+      "SUMBER YFINANCE DAN AUDIT KAGGLE",
+    ],
+    heroPreview: {
+      ariaLabel: "Pratinjau ruang kerja KAIROS Pemantau Risiko",
+      headerTag: "PRATINJAU PEMANTAU RISIKO",
+      sampleTag: "CONTOH PRATINJAU",
+      ticker: "IDX:TLKM",
+      mic: "XIDX",
+      tier: "TIER PENUH",
+      featured: "UNGGULAN HARI INI",
+      range80Label: "RENTANG EMPIRIS 80% (CONTOH 7H)",
+      range80SampleValue: "2.680 hingga 2.940 IDR",
+      sampleNote: "Ilustrasi struktur tampilan. Buka Pemantau Risiko untuk snapshot EOD langsung dari gateway.",
+      watchlistTitle: "DAFTAR PANTAU EMITEN",
+      watchlistRows: [
+        { ticker: "IDX:TLKM", tier: "TIER PENUH", tone: "verified" },
+        { ticker: "IDX:GOTO", tier: "RELIABILITAS RENDAH", tone: "warning" },
+        { ticker: "IDX:DCII", tier: "RELIABILITAS RENDAH", tone: "warning" },
+      ],
+      ctaLink: "Periksa Kerucut EOD",
+    },
+    worryAriaLabel: "Ringkasan batas risiko pasca-penutupan",
+    worryTitle: "Khawatir Saham Bergerak di Luar Ekspektasi?",
+    worryMetrics: [
       {
-        code: "M1",
-        title: "Rentang Harga Empiris",
-        desc: "Menjangkarkan titik tengah pada harga penutupan terbaru dan memproyeksikan interval imbal hasil 80% dan 95% untuk horizon 7 hari dan 30 hari.",
+        label: "Interval Empiris Utama",
+        value: "80%",
+        sub: "Rentang fluktuasi normal 7H dan 30H",
+      },
+      {
+        label: "Batas Risiko Ekor",
+        value: "95%",
+        sub: "Batas guncangan ekstrem historis",
+      },
+    ],
+    worryNoteLabel: "Keterangan:",
+    worryNoteText:
+      "Sudah mencakup kalibrasi kuantil empiris 750 hari bursa terakhir, estimasi volatilitas bersyarat GARCH-t (M2), dan pembandingan probabilitas koreksi terhadap tingkat dasar bergulir 252 hari.",
+    worryHighlightTitle: "Akses Langsung 100% Terbuka untuk Saham Unggulan Tanpa Login",
+    worryHighlightDesc:
+      "Anda dapat langsung memeriksa kerucut harga EOD dan backtest historis IDX:TLKM secara terbuka di Pemantau Risiko. Masuk dengan akun Google kapan saja untuk membuka seluruh daftar pantau emiten.",
+    worryVisual: {
+      badge: "KALIBRASI BATCH MALAM",
+      horizon7Label: "HORIZON 7H",
+      horizon7Desc: "Kerucut jangka pendek EOD",
+      horizon30Label: "HORIZON 30H",
+      horizon30Desc: "Dispersi rezim bulanan",
+      windowLabel: "KUANTIL 750H TERAKHIR",
+      auditLabel: "TERVERIFIKASI EMBARGO H-HARI",
+    },
+    benefitsAriaLabel: "Keuntungan memantau risiko bersama KAIROS",
+    benefitsTitle: "Keuntungan Memantau Risiko Bersama KAIROS",
+    benefits: [
+      {
+        badge: "750H KUANTIL EMPIRIS",
+        title: "Lebih Objektif",
+        desc: "Dapatkan gambaran risiko yang jujur dari distribusi imbal hasil nyata dan uji statistik, bukan dari rumor pasar atau target harga spekulatif.",
         primary: true,
       },
       {
-        code: "M2",
-        title: "Volatilitas GARCH-t",
-        desc: "Mengestimasi dispersi imbal hasil harian dan tahunan yang berubah terhadap waktu, dengan fallback varians jangka panjang otomatis untuk saham berlikuiditas tipis.",
+        badge: "EMBARGO H-HARI",
+        title: "Lebih Transparan",
+        desc: "Setiap proyeksi menampilkan jejak backtest walk-forward di luar sampel dan status reliabilitas data secara langsung di atas grafik penutupan.",
         primary: false,
       },
       {
-        code: "M3",
-        title: "Probabilitas Koreksi",
-        desc: "Mengukur peluang drawdown menembus ambang theta dalam horizon aktif dibandingkan tingkat dasar bergulir 252 hari.",
+        badge: "MODEL M1 / M2 / M3",
+        title: "Lebih Terukur",
+        desc: "Pisahkan fluktuasi harian wajar (interval 80%) dari potensi koreksi ekor (batas 95% dan ambang drawdown M3) sebelum mengevaluasi eksposur portofolio.",
         primary: false,
       },
     ],
-    ctaAriaLabel: "Buka pemantau risiko interaktif",
-    ctaTitle: "Siap memeriksa kerucut harga EOD interaktif dan backtest historis?",
-    ctaDesc:
-      "Mode tamu memberikan akses langsung ke IDX:TLKM pada horizon 7 hari dan 30 hari di dalam Pemantau Risiko. Masuk dengan Google kapan saja untuk membuka seluruh saham yang tersedia.",
-    openWatcher: "Buka Pemantau Risiko",
-    readMethodology: "Baca Metodologi",
-    signInGoogle: "Masuk dengan Google",
+    warningAriaLabel: "Sistem diagnostik Peringatan Cerdas",
+    warningTitle: "Peringatan Cerdas",
+    warningDesc:
+      "Bagaikan memiliki asisten manajemen risiko yang memberi peringatan otomatis saat struktur volatilitas berubah, peluang koreksi melampaui tingkat dasar 252 hari, atau kualitas data menurun akibat likuiditas tipis.",
+    warningAction: "Periksa Peringatan Aktif di Pemantau",
+    warningShowcaseAriaLabel: "Contoh kartu diagnostik peringatan",
+    warningShowcaseHeader: "MESIN DIAGNOSTIK MALAM",
+    warningCards: [
+      {
+        ticker: "IDX:GOTO",
+        status: "RELIABILITAS RENDAH",
+        tone: "warning",
+        title: "Deteksi Stagnasi Harga 95 Hari Bursa",
+        detail: "Model M2 otomatis beralih ke fallback varians jangka panjang konstan agar penutupan stagnan tidak mendistorsi kuantil.",
+      },
+      {
+        ticker: "IDX:TLKM",
+        status: "TIER PENUH",
+        tone: "verified",
+        title: "Evaluasi Ambang Koreksi M3 (Horizon 7H)",
+        detail: "Membandingkan peluang koreksi melewati ambang beku theta terhadap tingkat dasar historis 252 hari bursa.",
+      },
+      {
+        ticker: "IDX:DCII",
+        status: "RELIABILITAS RENDAH",
+        tone: "warning",
+        title: "Penanda 15,3% Hari Tanpa Transaksi",
+        detail: "Mempertahankan hari bursa dengan volume nol melalui penanda is_traded agar pita risiko tetap teraudit.",
+      },
+    ],
+    featuresAriaLabel: "Fitur Utama KAIROS",
+    featuresTitle: "Fitur Utama",
+    featuresListAriaLabel: "Pilih fitur untuk melihat pratinjau",
+    features: [
+      {
+        id: "m1",
+        code: "M1",
+        label: "KERUCUT HARGA EMPIRIS (M1)",
+        desc: "Memvisualisasikan titik tengah penutupan EOD terbaru beserta rentang empiris 80% dan 95% untuk horizon 7 dan 30 hari bursa.",
+        previewTag: "MODEL M1 AKTIF",
+        previewHeadline: "Kuantil Empiris 750 Hari Bursa Terakhir",
+        previewPrimaryLabel: "PITA TERKALIBRASI",
+        previewPrimaryValue: "80% Inti / 95% Ekor",
+        previewMetrics: [
+          { label: "Jangkar Tengah", value: "Penutupan EOD Terbaru" },
+          { label: "Horizon Aktif", value: "7H dan 30H" },
+        ],
+      },
+      {
+        id: "m2",
+        code: "M2",
+        label: "DATA VOLATILITAS GARCH-T (M2)",
+        desc: "Mengestimasi dispersi imbal hasil harian dan tahunan yang tervalidasi QLIKE, lengkap dengan fallback varians pada saham likuiditas tipis.",
+        previewTag: "MODEL M2 AKTIF",
+        previewHeadline: "Volatilitas Bersyarat dan Pengaman Fallback",
+        previewPrimaryLabel: "QLIKE REL_CONST TLKM",
+        previewPrimaryValue: "0,877 (7H) / 0,923 (30H)",
+        previewMetrics: [
+          { label: "Distribusi", value: "Student-t GARCH" },
+          { label: "Fallback", value: "Varians Konstan / EWMA" },
+        ],
+      },
+      {
+        id: "m3",
+        code: "M3",
+        label: "PEMANTAU PROBABILITAS KOREKSI (M3)",
+        desc: "Mengukur peluang koreksi menembus ambang beku theta yang dibandingkan terhadap tingkat dasar bergulir 252 hari.",
+        previewTag: "MODEL M3 AKTIF",
+        previewHeadline: "Risiko Ekor Tersirat Volatilitas",
+        previewPrimaryLabel: "SKOR BSS TLKM 7H",
+        previewPrimaryValue: "+0,043 vs Tingkat Dasar",
+        previewMetrics: [
+          { label: "Aturan Ambang", value: "0,85 x sigma x sqrt(h)" },
+          { label: "Pembanding", value: "Tingkat Dasar 252H" },
+        ],
+      },
+      {
+        id: "backtest",
+        code: "WF",
+        label: "AUDIT BACKTEST WALK-FORWARD",
+        desc: "Menampilkan jejak median prediksi di luar sampel langsung di atas harga penutupan aktual dengan embargo h-hari bebas kebocoran data.",
+        previewTag: "WALK-FORWARD TERVERIFIKASI",
+        previewHeadline: "Uji Out-of-Sample Bebas Kebocoran",
+        previewPrimaryLabel: "ATURAN EMBARGO",
+        previewPrimaryValue: "Pemisahan Label h-Hari",
+        previewMetrics: [
+          { label: "Jendela 30H", value: "35 hingga 55 per saham" },
+          { label: "Uji Permutasi", value: "Runtuh ke Baseline Naif" },
+        ],
+      },
+    ],
+    featuresPreviewAriaLabel: "Pratinjau grafik fitur interaktif",
+    featuresPreviewSampleBadge: "DIAGRAM ILUSTRATIF KERUCUT",
+    featuresChartLegend: {
+      actual: "PENUTUPAN AKTUAL",
+      backtest: "WALK-FORWARD",
+      median: "MEDIAN M1",
+      band80: "PITA 80%",
+      band95: "EKOR 95%",
+    },
+    ctaWatcherFinal: "Buka Pemantau Risiko Interaktif",
   },
   watcher: {
     loadingInstruments: "Memuat daftar instrumen aktif dari gateway...",
