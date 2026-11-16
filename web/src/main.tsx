@@ -5,6 +5,8 @@ import { AuthProvider } from "./hooks/useAuth";
 import { LocaleProvider } from "./hooks/useLocale";
 import { router } from "./routes";
 import "./styles/global.css";
+import "./styles/chart.css";
+import "./styles/ticker-search.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

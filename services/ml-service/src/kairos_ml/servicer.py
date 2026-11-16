@@ -111,7 +111,17 @@ class ForecastService(pb_grpc.ForecastServiceServicer):
 
         return pb.GetHistoryResponse(
             instrument_id=inst_id,
-            actual=[pb.ActualPoint(date=r[0], close=float(r[1])) for r in price_rows],
+            actual=[
+                pb.ActualPoint(
+                    date=r[0],
+                    close=float(r[1]),
+                    open=float(r[2]),
+                    high=float(r[3]),
+                    low=float(r[4]),
+                    volume=int(r[5]),
+                )
+                for r in price_rows
+            ],
             backtest=[
                 pb.BacktestPoint(
                     as_of_date=r[0],

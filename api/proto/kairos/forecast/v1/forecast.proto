@@ -127,6 +127,12 @@ message GetHistoryRequest {
 message ActualPoint {
   string date = 1;            // ISO date
   double close = 2;           // adjusted close for continuous charting
+  // Additive OHLCV for candlestick charts. Open/high/low are scaled by
+  // adj_close / close so they stay continuous with the adjusted close.
+  double open = 3;
+  double high = 4;
+  double low = 5;
+  int64 volume = 6;           // raw traded volume (0 on non-traded days)
 }
 
 message BacktestPoint {

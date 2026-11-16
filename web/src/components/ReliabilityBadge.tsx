@@ -1,18 +1,7 @@
 import { useLocale } from "../hooks/useLocale";
-import type { Messages } from "../i18n/messages";
 import type { ReliabilityTier, RunStatus } from "../types/api.types";
 import { formatPrice } from "../utils/format";
-
-function getTierMeta(tier: ReliabilityTier, t: Messages): { label: string; tone: string } {
-  switch (tier) {
-    case "full":
-      return { label: t.watchlist.fullTier, tone: "pill-verified" };
-    case "low":
-      return { label: t.watchlist.lowReliability, tone: "pill-warning" };
-    case "insufficient":
-      return { label: t.watchlist.insufficientData, tone: "pill-danger" };
-  }
-}
+import { getTierBadge } from "../utils/tierBadge";
 
 interface Props {
   instrumentId?: string;
@@ -34,7 +23,7 @@ export function ReliabilityBadge({
   mic,
 }: Props) {
   const { t } = useLocale();
-  const tierMeta = getTierMeta(tier, t);
+  const tierMeta = getTierBadge(tier, t);
 
   return (
     <div className="quote-summary">

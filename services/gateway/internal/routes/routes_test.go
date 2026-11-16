@@ -66,7 +66,9 @@ func (m *mockForecastClient) GetHistory(_ context.Context, req *forecastv1.GetHi
 	}
 	return &forecastv1.GetHistoryResponse{
 		InstrumentId: "IDX:TLKM",
-		Actual:       []*forecastv1.ActualPoint{{Date: "2026-11-10", Close: 2040}},
+		Actual: []*forecastv1.ActualPoint{
+			{Date: "2026-11-10", Close: 2040, Open: 2020, High: 2060, Low: 2010, Volume: 1500000},
+		},
 		Backtest:     []*forecastv1.BacktestPoint{{AsOfDate: "2026-10-01", HorizonDays: 7, Median: 2100, Lower80: 1950, Upper80: 2250}},
 	}, nil
 }
@@ -234,6 +236,17 @@ func TestGatewayRoutes(t *testing.T) {
 	mux.ServeHTTP(recHist, authedReq(http.MethodGet, "/v1/instruments/IDX:TLKM/history"))
 	if recHist.Code != http.StatusOK {
 		t.Fatalf("history expected 200, got %d", recHist.Code)
+	}
+	var histBody struct {
+		Actual []map[string]any `json:"actual"`
+	}
+	if err := json.Unmarshal(recHist.Body.Bytes(), &histBody); err != nil || len(histBody.Actual) != 1 {
+		t.Fatalf("history body invalid: %v %s", err, recHist.Body.String())
+	}
+	for _, key := range []string{"date", "close", "open", "high", "low", "volume"} {
+		if _, ok := histBody.Actual[0][key]; !ok {
+			t.Fatalf("history actual point missing %q: %v", key, histBody.Actual[0])
+		}
 	}
 
 	// POST /v1/admin/refresh: 401 with wrong key, 202 with valid key

@@ -60,7 +60,13 @@ export interface Forecast {
 
 export interface ActualPoint {
   date: string;
+  /** Adjusted close. */
   close: number;
+  /** Open, high and low are scaled by adj_close / close (continuous with `close`). */
+  open: number;
+  high: number;
+  low: number;
+  volume: number;
 }
 
 export interface BacktestPoint {

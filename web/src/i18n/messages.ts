@@ -1,3 +1,12 @@
+import {
+  chartUiEn,
+  chartUiId,
+  tickerSearchEn,
+  tickerSearchId,
+  type ChartUiMessages,
+  type TickerSearchMessages,
+} from "./chart.messages";
+
 export type Locale = "en" | "id";
 
 export type FooterTopicKey =
@@ -286,6 +295,8 @@ export interface Messages {
   protectedRoute: {
     checkingSession: string;
   };
+  chartUi: ChartUiMessages;
+  tickerSearch: TickerSearchMessages;
 }
 
 const en: Messages = {
@@ -906,6 +917,8 @@ const en: Messages = {
   protectedRoute: {
     checkingSession: "Checking session...",
   },
+  chartUi: chartUiEn,
+  tickerSearch: tickerSearchEn,
 };
 
 const id: Messages = {
@@ -1526,6 +1539,8 @@ const id: Messages = {
   protectedRoute: {
     checkingSession: "Memeriksa sesi...",
   },
+  chartUi: chartUiId,
+  tickerSearch: tickerSearchId,
 };
 
 export const MESSAGES: Record<Locale, Messages> = { en, id };

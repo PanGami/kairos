@@ -6,8 +6,17 @@ export interface LinePoint {
   value: number;
 }
 
+export interface CandlePoint {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
 export interface ChartSeries {
-  actual: LinePoint[];
+  candles: CandlePoint[];
   backtestMedian: LinePoint[];
   forecastMedian: LinePoint[];
   upper80: LinePoint[];
@@ -30,11 +39,23 @@ function buildBacktest(history: History, horizon: Horizon): LinePoint[] {
   return out;
 }
 
+/**
+ * Keeps OHLC internally consistent: a missing or inverted bar is repaired so
+ * high >= max(open, close) and low <= min(open, close), and the chart never throws.
+ */
+function toCandle(a: History["actual"][number]): CandlePoint {
+  const close = a.close;
+  const open = Number.isFinite(a.open) && a.open > 0 ? a.open : close;
+  const high = Math.max(Number.isFinite(a.high) && a.high > 0 ? a.high : close, open, close);
+  const low = Math.min(Number.isFinite(a.low) && a.low > 0 ? a.low : close, open, close);
+  return { time: a.date, open, high, low, close, volume: Math.max(0, a.volume ?? 0) };
+}
+
 export function buildChartSeries(history: History, forecast: Forecast, horizon: Horizon): ChartSeries {
   const pick = (f: (p: Forecast["path"][number]) => number): LinePoint[] =>
     forecast.path.map((p) => ({ time: addTradingDays(forecast.as_of_date, p.step), value: f(p) }));
   return {
-    actual: history.actual.map((a) => ({ time: a.date, value: a.close })),
+    candles: history.actual.map(toCandle),
     backtestMedian: buildBacktest(history, horizon),
     forecastMedian: pick((p) => p.median),
     upper80: pick((p) => p.upper80),

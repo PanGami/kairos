@@ -98,10 +98,21 @@ def fetch_latest_forecast(instrument_id: str, horizon: int) -> tuple | None:
 
 
 def fetch_history(instrument_id: str) -> tuple[list[tuple], list[tuple]]:
+    """Return (price_rows, backtest_rows).
+
+    price_rows: (date, adj_close, open, high, low, volume). OHLC are scaled by
+    adj_close / close so candles stay continuous with the adjusted close series.
+    """
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT trade_date::text, adj_close
+            SELECT
+                trade_date::text,
+                adj_close,
+                COALESCE(open * adj_close / NULLIF(close, 0), adj_close),
+                COALESCE(high * adj_close / NULLIF(close, 0), adj_close),
+                COALESCE(low * adj_close / NULLIF(close, 0), adj_close),
+                COALESCE(volume, 0)
             FROM prices_daily
             WHERE instrument_id = %s
             ORDER BY trade_date ASC

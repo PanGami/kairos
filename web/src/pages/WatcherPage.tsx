@@ -6,7 +6,9 @@ import { HorizonToggle } from "../components/HorizonToggle";
 import { InstrumentSelect } from "../components/InstrumentSelect";
 import { PriceChart } from "../components/PriceChart";
 import { ReliabilityBadge } from "../components/ReliabilityBadge";
+import { TickerSearchDialog } from "../components/TickerSearchDialog";
 import { useAuth } from "../hooks/useAuth";
+import { useChartPrefs } from "../hooks/useChartPrefs";
 import { useForecast, useHistory } from "../hooks/useForecast";
 import { useInstruments } from "../hooks/useInstruments";
 import { useLocale } from "../hooks/useLocale";
@@ -32,6 +34,8 @@ export function WatcherPage() {
   const [selected, setSelected] = useState<string | null>(() => searchParams.get("ticker"));
   const [horizon, setHorizon] = useState<Horizon>(() => (searchParams.get("horizon") === "30" ? 30 : 7));
   const [lockedPrompt, setLockedPrompt] = useState<Instrument | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const chartPrefs = useChartPrefs();
 
   const paramTicker = searchParams.get("ticker");
   const paramHorizon = searchParams.get("horizon");
@@ -161,6 +165,7 @@ export function WatcherPage() {
               currency={activeInstrument?.currency}
               onChange={handleSelectInstrument}
               onLockedClick={(inst) => setLockedPrompt(inst)}
+              onOpenSearch={() => setSearchOpen(true)}
             />
           </aside>
 
@@ -229,9 +234,13 @@ export function WatcherPage() {
               <PriceChart
                 series={series}
                 theme={theme}
+                chartPrefs={chartPrefs}
                 instrumentId={activeId ?? undefined}
+                mic={activeInstrument?.mic}
+                currency={activeInstrument?.currency}
                 horizonDays={horizon}
                 loading={forecast.loading || history.loading}
+                onOpenSearch={() => setSearchOpen(true)}
               />
             ) : forecast.loading || history.loading ? (
               <section className="chart-panel" aria-label={w.loadingChartAriaLabel}>
@@ -261,6 +270,16 @@ export function WatcherPage() {
             )}
             <EditorialIntro isGuest={isGuest} />
           </aside>
+          <TickerSearchDialog
+            open={searchOpen}
+            instruments={instruments.data}
+            activeId={activeId}
+            featuredId={featuredId}
+            isGuest={isGuest}
+            onSelect={handleSelectInstrument}
+            onLockedClick={(inst) => setLockedPrompt(inst)}
+            onClose={() => setSearchOpen(false)}
+          />
         </section>
       )}
     </div>

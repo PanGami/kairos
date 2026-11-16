@@ -1,7 +1,8 @@
 import { useLocale } from "../hooks/useLocale";
-import type { Messages } from "../i18n/messages";
-import type { Instrument, ReliabilityTier } from "../types/api.types";
+import type { Instrument } from "../types/api.types";
 import { formatPrice } from "../utils/format";
+import { pickWatchlist, rankByConfidence } from "../utils/instrumentRanking";
+import { getTierBadge } from "../utils/tierBadge";
 
 interface Props {
   instruments: Instrument[];
@@ -12,17 +13,7 @@ interface Props {
   currency?: string;
   onChange: (id: string) => void;
   onLockedClick: (instrument: Instrument) => void;
-}
-
-function tierBadge(tier: ReliabilityTier, t: Messages): { label: string; tone: string } {
-  switch (tier) {
-    case "full":
-      return { label: t.watchlist.fullTier, tone: "pill-verified" };
-    case "low":
-      return { label: t.watchlist.lowReliability, tone: "pill-warning" };
-    case "insufficient":
-      return { label: t.watchlist.insufficientData, tone: "pill-danger" };
-  }
+  onOpenSearch: () => void;
 }
 
 export function InstrumentSelect({
@@ -34,21 +25,25 @@ export function InstrumentSelect({
   currency = "IDR",
   onChange,
   onLockedClick,
+  onOpenSearch,
 }: Props) {
   const { t } = useLocale();
+  const ranked = rankByConfidence(instruments, featuredId);
+  const visible = pickWatchlist(ranked, value);
+  const hiddenCount = instruments.length - visible.length;
 
   return (
     <section className="terminal-widget watchlist-panel" aria-label={t.watchlist.panelAriaLabel}>
       <div className="widget-header">
         <span className="widget-title">{t.watchlist.title}</span>
-        <span className="widget-meta">{t.watchlist.tickersCount(instruments.length)}</span>
+        <span className="widget-meta">{t.watchlist.tickersCount(visible.length)}</span>
       </div>
       <div className="watchlist-list" role="group" aria-label={t.watchlist.listAriaLabel}>
-        {instruments.map((inst) => {
+        {visible.map((inst) => {
           const isFeatured = inst.instrument_id === featuredId;
           const isLocked = isGuest && !isFeatured;
           const isSelected = inst.instrument_id === value;
-          const badge = tierBadge(inst.reliability_tier, t);
+          const badge = getTierBadge(inst.reliability_tier, t);
           const showActivePrice = isSelected && activeLastPrice !== undefined;
 
           return (
@@ -79,6 +74,21 @@ export function InstrumentSelect({
             </button>
           );
         })}
+      </div>
+
+      <div className="watchlist-footer">
+        {hiddenCount > 0 && (
+          <p className="watchlist-footnote">{t.tickerSearch.watchlist.showingTop(visible.length, instruments.length)}</p>
+        )}
+        <button
+          type="button"
+          className="btn btn-secondary watchlist-browse-btn"
+          aria-haspopup="dialog"
+          aria-label={t.tickerSearch.watchlist.browseAriaLabel}
+          onClick={onOpenSearch}
+        >
+          {t.tickerSearch.watchlist.browseAll(instruments.length)}
+        </button>
       </div>
     </section>
   );

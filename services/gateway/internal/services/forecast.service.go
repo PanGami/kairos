@@ -88,7 +88,8 @@ func (s *ForecastService) GetForecastJSON(ctx context.Context, id string, horizo
 }
 
 func (s *ForecastService) GetHistoryJSON(ctx context.Context, id string) ([]byte, error) {
-	cacheKey := fmt.Sprintf("history:%s", id)
+	// v2: payload now carries OHLCV; the version suffix avoids serving stale close-only cache entries.
+	cacheKey := fmt.Sprintf("history:v2:%s", id)
 	if cached, ok := s.cache.Get(cacheKey); ok {
 		return []byte(cached), nil
 	}
@@ -101,8 +102,12 @@ func (s *ForecastService) GetHistoryJSON(ctx context.Context, id string) ([]byte
 	actual := make([]map[string]any, 0, len(resp.GetActual()))
 	for _, a := range resp.GetActual() {
 		actual = append(actual, map[string]any{
-			"date":  a.GetDate(),
-			"close": a.GetClose(),
+			"date":   a.GetDate(),
+			"close":  a.GetClose(),
+			"open":   a.GetOpen(),
+			"high":   a.GetHigh(),
+			"low":    a.GetLow(),
+			"volume": a.GetVolume(),
 		})
 	}
 	backtest := make([]map[string]any, 0, len(resp.GetBacktest()))

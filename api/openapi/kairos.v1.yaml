@@ -237,7 +237,11 @@ components:
             type: object
             properties:
               date: { type: string, format: date }
-              close: { type: number }
+              close: { type: number, description: Adjusted close }
+              open: { type: number, description: Open scaled by adj_close / close }
+              high: { type: number, description: High scaled by adj_close / close }
+              low: { type: number, description: Low scaled by adj_close / close }
+              volume: { type: integer, format: int64, description: Raw traded volume }
         backtest:
           type: array
           description: Walk-forward (out-of-sample), labeled distinctly from forward forecast
