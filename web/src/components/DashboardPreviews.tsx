@@ -1,10 +1,51 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocale } from "../hooks/useLocale";
+import type { DashboardChartLayerKey } from "../i18n/chart.messages";
 import type { DashboardFeatureKey } from "../i18n/messages";
+import { formatPrice } from "../utils/format";
+import { AnimatedValue } from "./AnimatedValue";
+
+const SWATCH_CLASS: Record<DashboardChartLayerKey, string> = {
+  actual: "swatch-actual",
+  backtest: "swatch-backtest",
+  cone80: "swatch-forecast",
+  cone95: "swatch-95",
+};
+
+function layerStateClass(hovered: DashboardChartLayerKey | null, key: DashboardChartLayerKey): string {
+  if (!hovered) return "svg-layer";
+  return hovered === key ? "svg-layer is-hovered" : "svg-layer is-dimmed";
+}
+
+function ChartHoverInfo({ hovered }: { hovered: DashboardChartLayerKey | null }) {
+  const { t } = useLocale();
+  const h = t.dashboardChartHover;
+
+  if (!hovered) {
+    return (
+      <div className="chart-hover-info is-idle" role="status">
+        <span className="chart-hover-hint">{h.defaultHint}</span>
+      </div>
+    );
+  }
+
+  const info = h.layers[hovered];
+  return (
+    <div key={hovered} className="chart-hover-info is-active" role="status">
+      <div className="chart-hover-head">
+        <span className={`legend-swatch ${SWATCH_CLASS[hovered]}`} aria-hidden="true" />
+        <strong className="chart-hover-label">{info.label}</strong>
+      </div>
+      <span className="chart-hover-desc">{info.desc}</span>
+    </div>
+  );
+}
 
 export function HeroWatcherPreview() {
   const { t } = useLocale();
   const p = t.dashboard.heroPreview;
+  const [hovered, setHovered] = useState<DashboardChartLayerKey | null>(null);
 
   return (
     <aside className="hero-device-frame" aria-label={p.ariaLabel}>
@@ -25,41 +66,74 @@ export function HeroWatcherPreview() {
           </div>
         </div>
 
-        <div className="device-mini-chart" role="img" aria-label={p.ariaLabel}>
+        <div
+          className="device-mini-chart"
+          role="img"
+          aria-label={p.ariaLabel}
+          onMouseLeave={() => setHovered(null)}
+        >
           <svg viewBox="0 0 320 130" width="320" height="130" className="preview-svg" aria-hidden="true">
             <line x1="0" y1="32" x2="320" y2="32" className="svg-grid-line" />
             <line x1="0" y1="65" x2="320" y2="65" className="svg-grid-line" />
             <line x1="0" y1="98" x2="320" y2="98" className="svg-grid-line" />
 
-            <polygon
-              points="196,64 312,24 312,106 196,64"
-              className="svg-cone-95-fill"
-            />
-            <polygon
-              points="196,64 312,40 312,88 196,64"
-              className="svg-cone-80-fill"
-            />
+            <g
+              className={layerStateClass(hovered, "cone95")}
+              onMouseEnter={() => setHovered("cone95")}
+            >
+              <polygon points="196,64 312,24 312,106 196,64" className="svg-cone-95-fill" />
+              <line x1="196" y1="64" x2="312" y2="24" className="svg-band95-line" />
+              <line x1="196" y1="64" x2="312" y2="106" className="svg-band95-line" />
+            </g>
 
-            <polyline
-              points="12,84 44,76 74,80 106,68 136,72 168,59 196,64"
-              className="svg-actual-line"
-            />
-            <polyline
-              points="44,79 74,77 106,72 136,70 168,64 196,65"
-              className="svg-backtest-line"
-            />
+            <g
+              className={layerStateClass(hovered, "cone80")}
+              onMouseEnter={() => setHovered("cone80")}
+            >
+              <polygon points="196,64 312,40 312,88 196,64" className="svg-cone-80-fill" />
+              <line x1="196" y1="64" x2="312" y2="64" className="svg-median-line" />
+              <line x1="196" y1="64" x2="312" y2="40" className="svg-band80-line" />
+              <line x1="196" y1="64" x2="312" y2="88" className="svg-band80-line" />
+            </g>
 
-            <line x1="196" y1="64" x2="312" y2="64" className="svg-median-line" />
-            <line x1="196" y1="64" x2="312" y2="40" className="svg-band80-line" />
-            <line x1="196" y1="64" x2="312" y2="88" className="svg-band80-line" />
-            <line x1="196" y1="64" x2="312" y2="24" className="svg-band95-line" />
-            <line x1="196" y1="64" x2="312" y2="106" className="svg-band95-line" />
+            <g
+              className={layerStateClass(hovered, "backtest")}
+              onMouseEnter={() => setHovered("backtest")}
+            >
+              <polyline
+                points="44,79 74,77 106,72 136,70 168,64 196,65"
+                className="svg-hit-stroke"
+              />
+              <polyline
+                points="44,79 74,77 106,72 136,70 168,64 196,65"
+                className="svg-backtest-line"
+              />
+            </g>
+
+            <g
+              className={layerStateClass(hovered, "actual")}
+              onMouseEnter={() => setHovered("actual")}
+            >
+              <polyline
+                points="12,84 44,76 74,80 106,68 136,72 168,59 196,64"
+                className="svg-hit-stroke"
+              />
+              <polyline
+                points="12,84 44,76 74,80 106,68 136,72 168,59 196,64"
+                className="svg-actual-line"
+              />
+            </g>
           </svg>
+          <ChartHoverInfo hovered={hovered} />
         </div>
 
         <div className="device-cone-readout">
           <div className="readout-primary-label">{p.range80Label}</div>
-          <div className="device-cone-value">{p.range80SampleValue}</div>
+          <div className="device-cone-value">
+            <AnimatedValue value={2680} format={formatPrice} durationMs={950} />{" "}
+            {t.forecastSummary.rangeConnector}{" "}
+            <AnimatedValue value={2940} format={formatPrice} durationMs={950} /> IDR
+          </div>
           <p className="device-cone-note">{p.sampleNote}</p>
         </div>
 
@@ -92,6 +166,12 @@ export function HeroWatcherPreview() {
 export function WorryHorizonVisual() {
   const { t } = useLocale();
   const v = t.dashboard.worryVisual;
+  const [selectedHorizon, setSelectedHorizon] = useState<7 | 30>(30);
+  const [hovered, setHovered] = useState<DashboardChartLayerKey | null>(null);
+
+  const endX = selectedHorizon === 7 ? 245 : 340;
+  const spread80 = selectedHorizon === 7 ? 20 : 37;
+  const spread95 = selectedHorizon === 7 ? 32 : 53;
 
   return (
     <div className="worry-visual-card">
@@ -99,33 +179,64 @@ export function WorryHorizonVisual() {
         <span className="pill pill-cyan">{v.badge}</span>
       </div>
 
-      <div className="worry-cone-diagram" aria-hidden="true">
+      <div
+        className="worry-cone-diagram"
+        aria-hidden="true"
+        onMouseLeave={() => setHovered(null)}
+      >
         <svg viewBox="0 0 360 150" width="360" height="150" className="preview-svg">
           <line x1="20" y1="75" x2="340" y2="75" className="svg-grid-line" />
           <line x1="130" y1="16" x2="130" y2="134" className="svg-grid-line" />
 
-          <polyline points="20,92 58,84 94,88 130,75" className="svg-actual-line" />
+          <g
+            className={layerStateClass(hovered, "cone95")}
+            onMouseEnter={() => setHovered("cone95")}
+          >
+            <polygon points={`130,75 ${endX},${75 - spread95} ${endX},${75 + spread95}`} className="svg-cone-95-fill active" />
+            <line x1="130" y1="75" x2={endX} y2={75 - spread95} className="svg-band95-line active" />
+            <line x1="130" y1="75" x2={endX} y2={75 + spread95} className="svg-band95-line active" />
+          </g>
 
-          <polygon points="130,75 215,48 215,102" className="svg-cone-80-fill" />
-          <polygon points="130,75 340,22 340,128" className="svg-cone-95-fill" />
+          <g
+            className={layerStateClass(hovered, "cone80")}
+            onMouseEnter={() => setHovered("cone80")}
+          >
+            <polygon points={`130,75 ${endX},${75 - spread80} ${endX},${75 + spread80}`} className="svg-cone-80-fill active" />
+            <line x1="130" y1="75" x2={endX} y2="75" className="svg-median-line active" />
+            <line x1="130" y1="75" x2={endX} y2={75 - spread80} className="svg-band80-line active" />
+            <line x1="130" y1="75" x2={endX} y2={75 + spread80} className="svg-band80-line active" />
+          </g>
 
-          <line x1="130" y1="75" x2="340" y2="75" className="svg-median-line" />
-          <line x1="130" y1="75" x2="340" y2="38" className="svg-band80-line" />
-          <line x1="130" y1="75" x2="340" y2="112" className="svg-band80-line" />
-          <line x1="130" y1="75" x2="340" y2="22" className="svg-band95-line" />
-          <line x1="130" y1="75" x2="340" y2="128" className="svg-band95-line" />
+          <g
+            className={layerStateClass(hovered, "actual")}
+            onMouseEnter={() => setHovered("actual")}
+          >
+            <polyline points="20,92 58,84 94,88 130,75" className="svg-hit-stroke" />
+            <polyline points="20,92 58,84 94,88 130,75" className="svg-actual-line" />
+          </g>
         </svg>
+        <ChartHoverInfo hovered={hovered} />
       </div>
 
-      <div className="worry-horizon-grid">
-        <div className="worry-horizon-box">
+      <div className="worry-horizon-grid" role="group" aria-label={v.badge}>
+        <button
+          type="button"
+          className={`worry-horizon-btn${selectedHorizon === 7 ? " active" : ""}`}
+          aria-pressed={selectedHorizon === 7}
+          onClick={() => setSelectedHorizon(7)}
+        >
           <span className="worry-horizon-code">{v.horizon7Label}</span>
           <span className="worry-horizon-desc">{v.horizon7Desc}</span>
-        </div>
-        <div className="worry-horizon-box">
+        </button>
+        <button
+          type="button"
+          className={`worry-horizon-btn${selectedHorizon === 30 ? " active" : ""}`}
+          aria-pressed={selectedHorizon === 30}
+          onClick={() => setSelectedHorizon(30)}
+        >
           <span className="worry-horizon-code">{v.horizon30Label}</span>
           <span className="worry-horizon-desc">{v.horizon30Desc}</span>
-        </div>
+        </button>
       </div>
 
       <div className="worry-visual-meta">
@@ -173,6 +284,7 @@ export function KeyFeatureChartPreview({ activeFeature }: { activeFeature: Dashb
   const d = t.dashboard;
   const active = d.features.find((item) => item.id === activeFeature) ?? d.features[0];
   const legend = d.featuresChartLegend;
+  const [hovered, setHovered] = useState<DashboardChartLayerKey | null>(null);
 
   const emphasizeCone = active.id === "m1";
   const emphasizeVol = active.id === "m2";
@@ -213,7 +325,12 @@ export function KeyFeatureChartPreview({ activeFeature }: { activeFeature: Dashb
           </span>
         </div>
 
-        <div className="features-svg-wrap" role="img" aria-label={active.previewHeadline}>
+        <div
+          className="features-svg-wrap"
+          role="img"
+          aria-label={active.previewHeadline}
+          onMouseLeave={() => setHovered(null)}
+        >
           <svg viewBox="0 0 540 230" width="540" height="230" className="preview-svg" aria-hidden="true">
             <line x1="0" y1="45" x2="540" y2="45" className="svg-grid-line" />
             <line x1="0" y1="95" x2="540" y2="95" className="svg-grid-line" />
@@ -221,63 +338,93 @@ export function KeyFeatureChartPreview({ activeFeature }: { activeFeature: Dashb
             <line x1="0" y1="195" x2="540" y2="195" className="svg-grid-line" />
             <line x1="330" y1="10" x2="330" y2="215" className="svg-origin-line" />
 
-            <polygon
-              points="330,112 520,30 520,196 330,112"
-              className={emphasizeTail || emphasizeVol ? "svg-cone-95-fill active" : "svg-cone-95-fill"}
-            />
-            <polygon
-              points="330,112 520,62 520,162 330,112"
-              className={emphasizeCone || emphasizeVol ? "svg-cone-80-fill active" : "svg-cone-80-fill"}
-            />
+            <g
+              className={layerStateClass(hovered, "cone95")}
+              onMouseEnter={() => setHovered("cone95")}
+            >
+              <polygon
+                points="330,112 520,30 520,196 330,112"
+                className={emphasizeTail || emphasizeVol ? "svg-cone-95-fill active" : "svg-cone-95-fill"}
+              />
+              <line
+                x1="330"
+                y1="112"
+                x2="520"
+                y2="30"
+                className={emphasizeTail ? "svg-band95-line active" : "svg-band95-line"}
+              />
+              <line
+                x1="330"
+                y1="112"
+                x2="520"
+                y2="196"
+                className={emphasizeTail ? "svg-band95-line active" : "svg-band95-line"}
+              />
+            </g>
 
-            <polyline
-              points="20,152 62,140 104,146 146,126 188,132 230,108 272,118 302,102 330,112"
-              className={emphasizeBacktest ? "svg-actual-line active" : "svg-actual-line"}
-            />
-            <polyline
-              points="62,144 104,142 146,134 188,128 230,118 272,115 302,109 330,113"
-              className={emphasizeBacktest ? "svg-backtest-line active" : "svg-backtest-line"}
-            />
+            <g
+              className={layerStateClass(hovered, "cone80")}
+              onMouseEnter={() => setHovered("cone80")}
+            >
+              <polygon
+                points="330,112 520,62 520,162 330,112"
+                className={emphasizeCone || emphasizeVol ? "svg-cone-80-fill active" : "svg-cone-80-fill"}
+              />
+              <line
+                x1="330"
+                y1="112"
+                x2="520"
+                y2="112"
+                className={emphasizeCone ? "svg-median-line active" : "svg-median-line"}
+              />
+              <line
+                x1="330"
+                y1="112"
+                x2="520"
+                y2="62"
+                className={emphasizeCone || emphasizeVol ? "svg-band80-line active" : "svg-band80-line"}
+              />
+              <line
+                x1="330"
+                y1="112"
+                x2="520"
+                y2="162"
+                className={emphasizeCone || emphasizeVol ? "svg-band80-line active" : "svg-band80-line"}
+              />
+            </g>
 
-            <line
-              x1="330"
-              y1="112"
-              x2="520"
-              y2="112"
-              className={emphasizeCone ? "svg-median-line active" : "svg-median-line"}
-            />
-            <line
-              x1="330"
-              y1="112"
-              x2="520"
-              y2="62"
-              className={emphasizeCone || emphasizeVol ? "svg-band80-line active" : "svg-band80-line"}
-            />
-            <line
-              x1="330"
-              y1="112"
-              x2="520"
-              y2="162"
-              className={emphasizeCone || emphasizeVol ? "svg-band80-line active" : "svg-band80-line"}
-            />
-            <line
-              x1="330"
-              y1="112"
-              x2="520"
-              y2="30"
-              className={emphasizeTail ? "svg-band95-line active" : "svg-band95-line"}
-            />
-            <line
-              x1="330"
-              y1="112"
-              x2="520"
-              y2="196"
-              className={emphasizeTail ? "svg-band95-line active" : "svg-band95-line"}
-            />
+            <g
+              className={layerStateClass(hovered, "backtest")}
+              onMouseEnter={() => setHovered("backtest")}
+            >
+              <polyline
+                points="62,144 104,142 146,134 188,128 230,118 272,115 302,109 330,113"
+                className="svg-hit-stroke"
+              />
+              <polyline
+                points="62,144 104,142 146,134 188,128 230,118 272,115 302,109 330,113"
+                className={emphasizeBacktest ? "svg-backtest-line active" : "svg-backtest-line"}
+              />
+            </g>
+
+            <g
+              className={layerStateClass(hovered, "actual")}
+              onMouseEnter={() => setHovered("actual")}
+            >
+              <polyline
+                points="20,152 62,140 104,146 146,126 188,132 230,108 272,118 302,102 330,112"
+                className="svg-hit-stroke"
+              />
+              <polyline
+                points="20,152 62,140 104,146 146,126 188,132 230,108 272,118 302,102 330,112"
+                className={emphasizeBacktest ? "svg-actual-line active" : "svg-actual-line"}
+              />
+            </g>
           </svg>
+          <ChartHoverInfo hovered={hovered} />
         </div>
 
-        <div className="features-telemetry-strip">
+        <div key={active.id} className="features-telemetry-strip features-telemetry-animate">
           <div className="telemetry-main">
             <span className="readout-primary-label">{active.previewPrimaryLabel}</span>
             <span className="telemetry-primary-value">{active.previewPrimaryValue}</span>

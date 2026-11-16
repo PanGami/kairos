@@ -2,6 +2,7 @@ import { useLocale } from "../hooks/useLocale";
 import type { ReliabilityTier, RunStatus } from "../types/api.types";
 import { formatPrice } from "../utils/format";
 import { getTierBadge } from "../utils/tierBadge";
+import { AnimatedValue } from "./AnimatedValue";
 
 interface Props {
   instrumentId?: string;
@@ -41,7 +42,7 @@ export function ReliabilityBadge({
       <div className="quote-metrics">
         {lastPrice !== undefined && (
           <span className="quote-price">
-            {t.badges.lastClose} {formatPrice(lastPrice)} {currency}
+            {t.badges.lastClose} <AnimatedValue value={lastPrice} format={formatPrice} /> {currency}
           </span>
         )}
         {asOfDate && <span className="meta-provenance-item">{t.badges.asOf} {asOfDate}</span>}

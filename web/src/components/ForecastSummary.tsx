@@ -1,10 +1,13 @@
 import { useLocale } from "../hooks/useLocale";
 import type { Forecast } from "../types/api.types";
 import { formatPct, formatPrice } from "../utils/format";
+import { AnimatedValue } from "./AnimatedValue";
 
 export function ForecastSummary({ f, currency = "IDR" }: { f: Forecast; currency?: string }) {
   const { t } = useLocale();
   const s = t.forecastSummary;
+  const pct1 = (n: number) => formatPct(n, 1);
+  const pct2 = (n: number) => formatPct(n, 2);
 
   return (
     <>
@@ -16,19 +19,21 @@ export function ForecastSummary({ f, currency = "IDR" }: { f: Forecast; currency
         <div className="cone-body">
           <div className="readout-primary-label">{s.range80Label}</div>
           <div className="readout-primary-value">
-            {formatPrice(f.lower80)} {s.rangeConnector} {formatPrice(f.upper80)} {currency}
+            <AnimatedValue value={f.lower80} format={formatPrice} /> {s.rangeConnector}{" "}
+            <AnimatedValue value={f.upper80} format={formatPrice} /> {currency}
           </div>
           <div className="keystats-table">
             <div className="keystats-row">
               <span className="keystats-label">{s.interval95Label}</span>
               <span className="keystats-value">
-                {formatPrice(f.lower95)} {s.rangeConnector} {formatPrice(f.upper95)} {currency}
+                <AnimatedValue value={f.lower95} format={formatPrice} /> {s.rangeConnector}{" "}
+                <AnimatedValue value={f.upper95} format={formatPrice} /> {currency}
               </span>
             </div>
             <div className="keystats-row">
               <span className="keystats-label">{s.forwardMedianLabel}</span>
               <span className="keystats-value">
-                {formatPrice(f.median)} {currency}
+                <AnimatedValue value={f.median} format={formatPrice} /> {currency}
               </span>
             </div>
           </div>
@@ -43,16 +48,21 @@ export function ForecastSummary({ f, currency = "IDR" }: { f: Forecast; currency
         <div className="keystats-table keystats-padded">
           <div className="keystats-row">
             <span className="keystats-label">{s.annualizedVol}</span>
-            <span className="keystats-value">{formatPct(f.volatility.annualized)}</span>
+            <span className="keystats-value">
+              <AnimatedValue value={f.volatility.annualized} format={pct1} />
+            </span>
           </div>
           <div className="keystats-row">
             <span className="keystats-label">{s.dailyVol}</span>
-            <span className="keystats-value">{formatPct(f.volatility.daily, 2)}</span>
+            <span className="keystats-value">
+              <AnimatedValue value={f.volatility.daily} format={pct2} />
+            </span>
           </div>
           <div className="keystats-row">
             <span className="keystats-label">{s.volBand}</span>
             <span className="keystats-value">
-              {formatPct(f.volatility.lower)} {s.rangeConnector} {formatPct(f.volatility.upper)}
+              <AnimatedValue value={f.volatility.lower} format={pct1} /> {s.rangeConnector}{" "}
+              <AnimatedValue value={f.volatility.upper} format={pct1} />
             </span>
           </div>
         </div>
@@ -66,15 +76,21 @@ export function ForecastSummary({ f, currency = "IDR" }: { f: Forecast; currency
         <div className="keystats-table keystats-padded">
           <div className="keystats-row">
             <span className="keystats-label">{s.correctionProb}</span>
-            <span className="keystats-value">{formatPct(f.correction.probability)}</span>
+            <span className="keystats-value">
+              <AnimatedValue value={f.correction.probability} format={pct1} />
+            </span>
           </div>
           <div className="keystats-row">
             <span className="keystats-label">{s.drawdownThreshold}</span>
-            <span className="keystats-value">theta {formatPct(f.correction.theta, 1)}</span>
+            <span className="keystats-value">
+              theta <AnimatedValue value={f.correction.theta} format={pct1} />
+            </span>
           </div>
           <div className="keystats-row">
             <span className="keystats-label">{s.baseRate252d}</span>
-            <span className="keystats-value">{formatPct(f.correction.rolling_base_rate)}</span>
+            <span className="keystats-value">
+              <AnimatedValue value={f.correction.rolling_base_rate} format={pct1} />
+            </span>
           </div>
         </div>
       </section>

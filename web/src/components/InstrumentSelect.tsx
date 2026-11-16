@@ -3,6 +3,7 @@ import type { Instrument } from "../types/api.types";
 import { formatPrice } from "../utils/format";
 import { pickWatchlist, rankByConfidence } from "../utils/instrumentRanking";
 import { getTierBadge } from "../utils/tierBadge";
+import { AnimatedValue } from "./AnimatedValue";
 
 interface Props {
   instruments: Instrument[];
@@ -58,7 +59,7 @@ export function InstrumentSelect({
                 <span className="emitter-ticker">{inst.instrument_id}</span>
                 {showActivePrice && (
                   <span className="emitter-price">
-                    {formatPrice(activeLastPrice)} {currency}
+                    <AnimatedValue value={activeLastPrice} format={formatPrice} /> {currency}
                   </span>
                 )}
               </div>

@@ -1,6 +1,7 @@
 import { useLocale } from "../../hooks/useLocale";
 import { formatPrice, formatSignedPct, formatVolume } from "../../utils/format";
 import type { PriceStats } from "../../utils/priceStats";
+import { AnimatedValue } from "../AnimatedValue";
 
 interface Props {
   stats: PriceStats;
@@ -11,17 +12,33 @@ interface Props {
 export function ChartStatsStrip({ stats, currency = "IDR" }: Props) {
   const { t } = useLocale();
   const s = t.chartUi.stats;
-  const price = (v: number | undefined) => (v === undefined ? "N/A" : `${formatPrice(v)} ${currency}`);
 
-  const cells: Array<{ label: string; value: string; tone?: string }> = [
-    { label: s.rangeHigh, value: price(stats.range?.high) },
-    { label: s.rangeLow, value: price(stats.range?.low) },
-    { label: s.high52w, value: price(stats.week52?.high) },
-    { label: s.low52w, value: price(stats.week52?.low) },
-    { label: s.avgVolume20d, value: stats.avgVolume20 === null ? "N/A" : formatVolume(stats.avgVolume20) },
+  const renderPrice = (v: number | undefined) =>
+    v === undefined ? (
+      "N/A"
+    ) : (
+      <>
+        <AnimatedValue value={v} format={formatPrice} /> {currency}
+      </>
+    );
+
+  const cells = [
+    { label: s.rangeHigh, content: renderPrice(stats.range?.high) },
+    { label: s.rangeLow, content: renderPrice(stats.range?.low) },
+    { label: s.high52w, content: renderPrice(stats.week52?.high) },
+    { label: s.low52w, content: renderPrice(stats.week52?.low) },
+    {
+      label: s.avgVolume20d,
+      content: stats.avgVolume20 === null ? "N/A" : <AnimatedValue value={stats.avgVolume20} format={formatVolume} />,
+    },
     {
       label: s.rangeChange,
-      value: stats.rangeChangePct === null ? "N/A" : formatSignedPct(stats.rangeChangePct),
+      content:
+        stats.rangeChangePct === null ? (
+          "N/A"
+        ) : (
+          <AnimatedValue value={stats.rangeChangePct} format={formatSignedPct} />
+        ),
       tone: stats.rangeChangePct !== null && stats.rangeChangePct < 0 ? "tone-down" : "tone-up",
     },
   ];
@@ -32,7 +49,7 @@ export function ChartStatsStrip({ stats, currency = "IDR" }: Props) {
         {cells.map((cell) => (
           <div key={cell.label} className="chart-stat">
             <dt className="chart-stat-label">{cell.label}</dt>
-            <dd className={`chart-stat-value ${cell.tone ?? ""}`}>{cell.value}</dd>
+            <dd className={`chart-stat-value ${cell.tone ?? ""}`}>{cell.content}</dd>
           </div>
         ))}
       </dl>

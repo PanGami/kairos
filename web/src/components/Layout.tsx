@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useLocale } from "../hooks/useLocale";
@@ -54,14 +54,28 @@ export function Layout() {
   const { user, logout } = useAuth();
   const { locale, setLocale, t } = useLocale();
   const [activeTopic, setActiveTopic] = useState<FooterTopicKey | null>(null);
+  const [scrolled, setScrolled] = useState(() => (typeof window !== "undefined" ? window.scrollY > 40 : false));
   const themeLabel = theme === "dark" ? t.nav.switchToLight : t.nav.switchToDark;
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled((prev) => {
+        if (!prev && y > 40) return true;
+        if (prev && y < 14) return false;
+        return prev;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div className="app-shell">
-      <header className="topbar">
+      <header className={`topbar${scrolled ? " topbar-scrolled" : ""}`}>
         <div className="topbar-inner">
           <div className="topbar-left">
-            <Link to="/" className="brand-group">
+            <Link to="/" className="brand-group" aria-label="KAIROS">
               <img
                 src="/logo.png"
                 alt=""
@@ -71,7 +85,7 @@ export function Layout() {
                 aria-hidden="true"
               />
               <strong className="brand-mark">KAIROS</strong>
-              <span className="pill pill-muted">{t.nav.brandTag}</span>
+              <span className="pill pill-muted brand-tag">{t.nav.brandTag}</span>
             </Link>
             <nav className="topbar-nav" aria-label={t.nav.primaryAriaLabel}>
               <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>

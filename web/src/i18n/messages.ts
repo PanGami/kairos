@@ -1,9 +1,12 @@
 import {
   chartUiEn,
   chartUiId,
+  dashboardChartHoverEn,
+  dashboardChartHoverId,
   tickerSearchEn,
   tickerSearchId,
   type ChartUiMessages,
+  type DashboardChartHoverMessages,
   type TickerSearchMessages,
 } from "./chart.messages";
 
@@ -297,6 +300,7 @@ export interface Messages {
   };
   chartUi: ChartUiMessages;
   tickerSearch: TickerSearchMessages;
+  dashboardChartHover: DashboardChartHoverMessages;
 }
 
 const en: Messages = {
@@ -919,6 +923,7 @@ const en: Messages = {
   },
   chartUi: chartUiEn,
   tickerSearch: tickerSearchEn,
+  dashboardChartHover: dashboardChartHoverEn,
 };
 
 const id: Messages = {
@@ -1541,6 +1546,7 @@ const id: Messages = {
   },
   chartUi: chartUiId,
   tickerSearch: tickerSearchId,
+  dashboardChartHover: dashboardChartHoverId,
 };
 
 export const MESSAGES: Record<Locale, Messages> = { en, id };

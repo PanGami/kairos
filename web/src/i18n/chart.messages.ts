@@ -1,6 +1,57 @@
 import type { ChartType, IndicatorKey } from "../utils/chartPrefs";
 import type { RangeKey } from "../utils/priceStats";
 
+export type DashboardChartLayerKey = "actual" | "backtest" | "cone80" | "cone95";
+
+export interface DashboardChartHoverMessages {
+  defaultHint: string;
+  layers: Record<DashboardChartLayerKey, { label: string; desc: string }>;
+}
+
+export const dashboardChartHoverEn: DashboardChartHoverMessages = {
+  defaultHint: "Hover over the white close line, emerald 80% cone, or amber 95% bounds to inspect each layer.",
+  layers: {
+    actual: {
+      label: "ACTUAL EOD CLOSE",
+      desc: "Trailing adjusted closing prices up to the latest end-of-day snapshot.",
+    },
+    backtest: {
+      label: "WALK-FORWARD MEDIAN",
+      desc: "Out-of-sample historical medians verified with an h-day leak-free embargo.",
+    },
+    cone80: {
+      label: "80% EMPIRICAL CONE (M1)",
+      desc: "Forward random-walk median paired with the 80% core interval from 750-day empirical quantiles.",
+    },
+    cone95: {
+      label: "95% TAIL BOUNDARY (M1)",
+      desc: "Outer 95% tail risk envelope highlighting extreme historical return dispersion.",
+    },
+  },
+};
+
+export const dashboardChartHoverId: DashboardChartHoverMessages = {
+  defaultHint: "Arahkan kursor ke garis putih penutupan, area hijau 80%, atau batas kuning 95% untuk info lapisan.",
+  layers: {
+    actual: {
+      label: "PENUTUPAN AKTUAL (EOD)",
+      desc: "Jejak harga penutupan penyesuaian historis hingga snapshot akhir hari terbaru.",
+    },
+    backtest: {
+      label: "MEDIAN WALK-FORWARD",
+      desc: "Median uji historis out-of-sample dengan embargo h-hari bebas kebocoran data.",
+    },
+    cone80: {
+      label: "KERUCUT EMPIRIS 80% (M1)",
+      desc: "Median proyeksi random-walk beserta pita inti 80% dari kuantil empiris 750 hari.",
+    },
+    cone95: {
+      label: "BATAS EKOR 95% (M1)",
+      desc: "Amplop risiko ekor terluar 95% untuk menandai dispersi guncangan harga ekstrem.",
+    },
+  },
+};
+
 export interface ChartUiMessages {
   toolbarAriaLabel: string;
   symbolSearchLabel: string;

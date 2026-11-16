@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { AnimatedValue } from "../components/AnimatedValue";
 import {
   HeroWatcherPreview,
   KeyFeatureChartPreview,
@@ -8,7 +9,20 @@ import {
 } from "../components/DashboardPreviews";
 import { useAuth } from "../hooks/useAuth";
 import { useLocale } from "../hooks/useLocale";
+import { useReveal } from "../hooks/useReveal";
 import type { DashboardFeatureKey } from "../i18n/messages";
+
+function renderMetricValue(raw: string, active: boolean) {
+  const numeric = Number.parseFloat(raw);
+  if (!Number.isFinite(numeric) || !raw.endsWith("%")) return raw;
+  return (
+    <AnimatedValue
+      value={active ? numeric : 0}
+      format={(n) => `${Math.round(n)}%`}
+      durationMs={900}
+    />
+  );
+}
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -16,6 +30,10 @@ export function DashboardPage() {
   const d = t.dashboard;
   const isGuest = !user;
   const [activeFeature, setActiveFeature] = useState<DashboardFeatureKey>("m1");
+  const [worryRef, worryVisible] = useReveal<HTMLElement>();
+  const [benefitsRef, benefitsVisible] = useReveal<HTMLElement>();
+  const [warningRef, warningVisible] = useReveal<HTMLElement>();
+  const [featuresRef, featuresVisible] = useReveal<HTMLElement>();
 
   return (
     <div className="dash-page">
@@ -64,14 +82,18 @@ export function DashboardPage() {
         <HeroWatcherPreview />
       </section>
 
-      <section className="dash-worry-section stage-2" aria-label={d.worryAriaLabel}>
+      <section
+        ref={worryRef}
+        className={`dash-worry-section reveal-section${worryVisible ? " is-visible" : ""}`}
+        aria-label={d.worryAriaLabel}
+      >
         <div className="worry-top-block">
           <h2 className="dash-section-heading">{d.worryTitle}</h2>
           <div className="worry-metrics-row">
             {d.worryMetrics.map((metric) => (
               <div key={metric.label} className="worry-metric-item">
                 <span className="worry-metric-label">{metric.label}</span>
-                <span className="worry-metric-value">{metric.value}</span>
+                <span className="worry-metric-value">{renderMetricValue(metric.value, worryVisible)}</span>
                 <span className="worry-metric-sub">{metric.sub}</span>
               </div>
             ))}
@@ -100,7 +122,11 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="dash-benefits-section stage-3" aria-label={d.benefitsAriaLabel}>
+      <section
+        ref={benefitsRef}
+        className={`dash-benefits-section reveal-section${benefitsVisible ? " is-visible" : ""}`}
+        aria-label={d.benefitsAriaLabel}
+      >
         <h2 className="dash-section-heading">{d.benefitsTitle}</h2>
         <div className="dash-benefits-grid">
           {d.benefits.map((item) => (
@@ -116,7 +142,11 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="dash-warning-section" aria-label={d.warningAriaLabel}>
+      <section
+        ref={warningRef}
+        className={`dash-warning-section reveal-section${warningVisible ? " is-visible" : ""}`}
+        aria-label={d.warningAriaLabel}
+      >
         <div className="warning-copy-col">
           <h2 className="dash-section-heading-left">{d.warningTitle}</h2>
           <p className="warning-desc">{d.warningDesc}</p>
@@ -129,7 +159,11 @@ export function DashboardPage() {
         <SmartWarningShowcase />
       </section>
 
-      <section className="dash-features-section" aria-label={d.featuresAriaLabel}>
+      <section
+        ref={featuresRef}
+        className={`dash-features-section reveal-section${featuresVisible ? " is-visible" : ""}`}
+        aria-label={d.featuresAriaLabel}
+      >
         <KeyFeatureChartPreview activeFeature={activeFeature} />
         <div className="features-list-col">
           <h2 className="dash-section-heading-left">{d.featuresTitle}</h2>

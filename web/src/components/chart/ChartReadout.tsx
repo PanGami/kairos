@@ -1,6 +1,7 @@
 import { useLocale } from "../../hooks/useLocale";
 import type { ChartPrefs } from "../../utils/chartPrefs";
 import { formatPrice, formatSignedPct, formatSignedPrice, formatVolume } from "../../utils/format";
+import { AnimatedValue } from "../AnimatedValue";
 import type { HoverSnapshot } from "./chartLookup";
 
 interface Props {
@@ -26,10 +27,12 @@ export function ChartReadout({ instrumentId, mic, snapshot, prefs }: Props) {
   const changePct = prevClose && prevClose > 0 && change !== null ? change / prevClose : null;
   const changeTone = change !== null && change < 0 ? "tone-down" : "tone-up";
 
-  const cell = (key: string, title: string, value: string) => (
+  const cell = (key: string, title: string, value: number) => (
     <span className="readout-item" title={title}>
       <span className="readout-key">{key}</span>
-      <span className={`readout-value ${tone}`}>{value}</span>
+      <span className={`readout-value ${tone}`}>
+        <AnimatedValue value={value} format={formatPrice} durationMs={120} />
+      </span>
     </span>
   );
 
@@ -52,18 +55,21 @@ export function ChartReadout({ instrumentId, mic, snapshot, prefs }: Props) {
         <span className="readout-meta">{t.chartUi.intervalTag}</span>
         {mic && <span className="readout-meta">{mic}</span>}
         <span className="readout-meta">{snapshot.time}</span>
-        {cell(o.open, o.openTitle, formatPrice(candle.open))}
-        {cell(o.high, o.highTitle, formatPrice(candle.high))}
-        {cell(o.low, o.lowTitle, formatPrice(candle.low))}
-        {cell(o.close, o.closeTitle, formatPrice(candle.close))}
+        {cell(o.open, o.openTitle, candle.open)}
+        {cell(o.high, o.highTitle, candle.high)}
+        {cell(o.low, o.lowTitle, candle.low)}
+        {cell(o.close, o.closeTitle, candle.close)}
         {change !== null && changePct !== null && (
           <span className={`readout-change ${changeTone}`}>
-            {formatSignedPrice(change)} ({formatSignedPct(changePct)})
+            <AnimatedValue value={change} format={formatSignedPrice} durationMs={120} /> (
+            <AnimatedValue value={changePct} format={formatSignedPct} durationMs={120} />)
           </span>
         )}
         <span className="readout-item" title={o.volumeTitle}>
           <span className="readout-key">{o.volume}</span>
-          <span className={`readout-value ${tone}`}>{formatVolume(candle.volume)}</span>
+          <span className={`readout-value ${tone}`}>
+            <AnimatedValue value={candle.volume} format={formatVolume} durationMs={120} />
+          </span>
         </span>
       </div>
 
@@ -73,7 +79,9 @@ export function ChartReadout({ instrumentId, mic, snapshot, prefs }: Props) {
             <span key={v.key} className="readout-item">
               <span className={`indicator-swatch indicator-swatch-${v.key.startsWith("bb") ? "bollinger" : v.key}`} aria-hidden="true" />
               <span className="readout-key">{v.label}</span>
-              <span className="readout-value">{formatPrice(v.value)}</span>
+              <span className="readout-value">
+                <AnimatedValue value={v.value} format={formatPrice} durationMs={120} />
+              </span>
             </span>
           ))}
         </div>

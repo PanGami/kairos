@@ -79,7 +79,7 @@ select:disabled,
   background: var(--bg-canvas);
 }
 
-/* Sticky Terminal Topbar (56px min height, wraps cleanly on narrow viewports) */
+/* Sticky Terminal Topbar (56px min height, minimizes smoothly on scroll) */
 .topbar {
   position: sticky;
   top: 0;
@@ -87,6 +87,12 @@ select:disabled,
   min-height: 56px;
   background: var(--bg-canvas);
   border-bottom: 1px solid var(--border-subtle);
+  transition: min-height 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease, border-color 260ms ease;
+}
+
+.topbar-scrolled {
+  min-height: 46px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
 }
 
 .topbar-inner {
@@ -99,6 +105,12 @@ select:disabled,
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px 18px;
+  transition: min-height 260ms cubic-bezier(0.22, 1, 0.36, 1), padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topbar-scrolled .topbar-inner {
+  min-height: 46px;
+  padding: 2px 16px;
 }
 
 .topbar-left {
@@ -114,6 +126,11 @@ select:disabled,
   align-items: center;
   gap: 10px;
   min-height: 44px;
+  transition: gap 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topbar-scrolled .brand-group {
+  gap: 0;
 }
 
 .brand-logo {
@@ -122,6 +139,11 @@ select:disabled,
   object-fit: contain;
   display: block;
   flex-shrink: 0;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topbar-scrolled .brand-logo {
+  transform: scale(0.92);
 }
 
 .brand-mark,
@@ -131,6 +153,43 @@ select:disabled,
   font-size: 1rem;
   letter-spacing: 0.14em;
   color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.brand-mark {
+  display: inline-block;
+  max-width: 120px;
+  overflow: hidden;
+  transition:
+    max-width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.brand-tag {
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition:
+    max-width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease,
+    padding 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topbar-scrolled .brand-mark,
+.topbar-scrolled .brand-tag {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+}
+
+.topbar-scrolled .brand-tag {
+  padding-left: 0;
+  padding-right: 0;
+  border-width: 0;
 }
 
 .topbar-nav {
@@ -689,6 +748,13 @@ select:disabled,
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.25;
+  /* Reserve 2+ lines so switching between 4-digit and 6-digit prices never shifts layout below. */
+  min-height: 2.75em;
+}
+
+.cone-widget .keystats-row {
+  min-height: 52px;
+  align-items: center;
 }
 
 .keystats-table {
