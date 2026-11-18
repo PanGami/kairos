@@ -30,6 +30,7 @@ export interface AdminRefreshItem {
 export interface AuthConfig {
   google_client_id: string;
   dev_login_enabled: boolean;
+  turnstile_site_key?: string;
 }
 
 export interface SignInResponse {

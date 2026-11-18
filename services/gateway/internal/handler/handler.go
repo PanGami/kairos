@@ -22,6 +22,7 @@ type Handler struct {
 	instruments  *services.InstrumentService
 	forecasts    *services.ForecastService
 	auth         *services.AuthService
+	captcha      *services.CaptchaVerifier
 	adminKey     string
 	authLimiter  *middleware.AuthRateLimiter
 	cookieSecure bool
@@ -45,6 +46,10 @@ func (h *Handler) SetAuthLimiter(limiter *middleware.AuthRateLimiter) {
 	if limiter != nil {
 		h.authLimiter = limiter
 	}
+}
+
+func (h *Handler) SetCaptchaVerifier(verifier *services.CaptchaVerifier) {
+	h.captcha = verifier
 }
 
 func grpcCtx(r *http.Request, timeout time.Duration) (context.Context, context.CancelFunc) {

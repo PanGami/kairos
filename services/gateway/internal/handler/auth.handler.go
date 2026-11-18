@@ -185,17 +185,43 @@ func (h *Handler) AuthLinkGoogle(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"user": user})
 }
 
+func (h *Handler) verifyCaptcha(w http.ResponseWriter, r *http.Request, token string) bool {
+	if h.captcha == nil || !h.captcha.Enabled() {
+		return true
+	}
+	ok, err := h.captcha.Verify(r.Context(), token, middleware.ClientIP(r))
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]any{
+			"error": "Gagal memverifikasi CAPTCHA. Silakan coba lagi.",
+			"code":  "CAPTCHA_UNAVAILABLE",
+		})
+		return false
+	}
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"error": "Verifikasi CAPTCHA gagal. Silakan centang ulang tantangan keamanan.",
+			"code":  "CAPTCHA_FAILED",
+		})
+		return false
+	}
+	return true
+}
+
 func (h *Handler) AuthRegister(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name                 string `json:"name"`
 		Email                string `json:"email"`
 		Password             string `json:"password"`
 		PasswordConfirmation string `json:"password_confirmation"`
+		CaptchaToken         string `json:"captcha_token"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
 	}
 	if !h.checkAuthLimits(w, r, "register", body.Email) {
+		return
+	}
+	if !h.verifyCaptcha(w, r, body.CaptchaToken) {
 		return
 	}
 	ctx, cancel := grpcCtx(r, 10*time.Second)
@@ -276,12 +302,16 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AuthForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Email string `json:"email"`
+		Email        string `json:"email"`
+		CaptchaToken string `json:"captcha_token"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
 	}
 	if !h.checkAuthLimits(w, r, "forgot", body.Email) {
+		return
+	}
+	if !h.verifyCaptcha(w, r, body.CaptchaToken) {
 		return
 	}
 	ctx, cancel := grpcCtx(r, 10*time.Second)

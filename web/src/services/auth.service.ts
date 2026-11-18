@@ -50,7 +50,13 @@ export async function linkGoogle(
 }
 
 export function registerAccount(
-  payload: { name: string; email: string; password: string; password_confirmation: string },
+  payload: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    captcha_token?: string;
+  },
   signal?: AbortSignal,
 ): Promise<RegisterResponse> {
   return postJson<RegisterResponse>("/v1/auth/register", payload, signal);
@@ -81,8 +87,16 @@ export async function loginWithPassword(
   return res;
 }
 
-export function forgotPassword(email: string, signal?: AbortSignal): Promise<ForgotPasswordResponse> {
-  return postJson<ForgotPasswordResponse>("/v1/auth/password/forgot", { email }, signal);
+export function forgotPassword(
+  email: string,
+  captchaToken?: string,
+  signal?: AbortSignal,
+): Promise<ForgotPasswordResponse> {
+  return postJson<ForgotPasswordResponse>(
+    "/v1/auth/password/forgot",
+    captchaToken ? { email, captcha_token: captchaToken } : { email },
+    signal,
+  );
 }
 
 export async function resetPassword(

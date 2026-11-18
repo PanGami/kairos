@@ -118,6 +118,8 @@ services:
       AUTH_COOKIE_SECURE: "true"
       ADMIN_API_KEY: ${ADMIN_API_KEY}
       RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
     depends_on:
       - ml-service
       - auth-service

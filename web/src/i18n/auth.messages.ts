@@ -16,6 +16,8 @@ export interface AuthUiMessages {
     backAction: string;
     closeAction: string;
     saving: string;
+    captchaRequiredError: string;
+    captchaLoadError: string;
   };
   passwordPolicy: {
     title: string;
@@ -163,6 +165,8 @@ export const authUiEn: AuthUiMessages = {
     backAction: "Back",
     closeAction: "Close",
     saving: "Saving...",
+    captchaRequiredError: "Please complete the security challenge before submitting.",
+    captchaLoadError: "Failed to load security challenge. Please refresh the page.",
   },
   passwordPolicy: {
     title: "Password Security Requirements",
@@ -317,6 +321,8 @@ export const authUiId: AuthUiMessages = {
     backAction: "Kembali",
     closeAction: "Tutup",
     saving: "Menyimpan...",
+    captchaRequiredError: "Silakan selesaikan verifikasi keamanan terlebih dahulu.",
+    captchaLoadError: "Gagal memuat verifikasi keamanan. Silakan muat ulang halaman.",
   },
   passwordPolicy: {
     title: "Syarat Keamanan Password",

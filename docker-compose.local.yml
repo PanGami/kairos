@@ -129,6 +129,8 @@ services:
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-change_me_admin_key}
       RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
     ports:
       - "8080:8080"
     depends_on:

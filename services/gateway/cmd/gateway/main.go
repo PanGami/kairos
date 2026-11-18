@@ -60,6 +60,7 @@ func main() {
 
 	devLogin := strings.EqualFold(env("AUTH_DEV_BYPASS", "false"), "true")
 	authSvc := services.NewAuthService(authClient, os.Getenv("GOOGLE_CLIENT_ID"), devLogin)
+	authSvc.SetTurnstileSiteKey(os.Getenv("TURNSTILE_SITE_KEY"))
 
 	h := handler.New(
 		services.NewInstrumentService(mlClient, redisCache),
@@ -68,6 +69,7 @@ func main() {
 		env("ADMIN_API_KEY", "change_me_admin_key"),
 	)
 	h.SetCookieSecure(strings.EqualFold(env("AUTH_COOKIE_SECURE", "false"), "true"))
+	h.SetCaptchaVerifier(services.NewCaptchaVerifier(os.Getenv("TURNSTILE_SECRET_KEY")))
 
 	mux := routes.NewRouter(h, authSvc)
 

@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -508,5 +509,64 @@ func TestGatewayRoutes(t *testing.T) {
 	mux.ServeHTTP(recDelete, adminReq(http.MethodDelete, "/v1/admin/users/google:dev", ""))
 	if recDelete.Code != http.StatusOK {
 		t.Fatalf("admin delete user expected 200, got %d", recDelete.Code)
+	}
+}
+
+func TestGatewayCaptchaEnforcement(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	unusedAddr := ln.Addr().String()
+	_ = ln.Close()
+
+	turnstileSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = r.ParseForm()
+		ok := r.FormValue("response") == "ok-token" && r.FormValue("secret") == "turnstile-secret"
+		w.Header().Set("Content-Type", "application/json")
+		if ok {
+			_, _ = w.Write([]byte(`{"success":true}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"success":false}`))
+	}))
+	defer turnstileSrv.Close()
+
+	ml := &mockForecastClient{}
+	authClient := &mockAuthClient{}
+	c := cache.New(unusedAddr)
+	authSvc := services.NewAuthService(authClient, "", true)
+	authSvc.SetTurnstileSiteKey("1x00000000000000000000AA")
+
+	verifier := services.NewCaptchaVerifier("turnstile-secret")
+	verifier.Endpoint = turnstileSrv.URL
+
+	h := handler.New(
+		services.NewInstrumentService(ml, c),
+		services.NewForecastService(ml, c),
+		authSvc,
+		"secret-admin-key",
+	)
+	h.SetCaptchaVerifier(verifier)
+	mux := NewRouter(h, authSvc)
+
+	recCfg := httptest.NewRecorder()
+	mux.ServeHTTP(recCfg, httptest.NewRequest(http.MethodGet, "/v1/auth/config", nil))
+	if recCfg.Code != http.StatusOK || !strings.Contains(recCfg.Body.String(), "1x00000000000000000000AA") {
+		t.Fatalf("expected turnstile_site_key in /v1/auth/config, got code=%d body=%s", recCfg.Code, recCfg.Body.String())
+	}
+
+	// Missing token rejected with 400 CAPTCHA_FAILED
+	recMissing := httptest.NewRecorder()
+	mux.ServeHTTP(recMissing, httptest.NewRequest(http.MethodPost, "/v1/auth/register", bytes.NewBufferString(`{"name":"Tester","email":"t@example.com","password":"Cedar#Harbor94!","password_confirmation":"Cedar#Harbor94!"}`)))
+	if recMissing.Code != http.StatusBadRequest || !strings.Contains(recMissing.Body.String(), "CAPTCHA_FAILED") {
+		t.Fatalf("expected 400 CAPTCHA_FAILED, got code=%d body=%s", recMissing.Code, recMissing.Body.String())
+	}
+
+	// Valid token passes CAPTCHA and reaches auth-service Register (201)
+	recValid := httptest.NewRecorder()
+	mux.ServeHTTP(recValid, httptest.NewRequest(http.MethodPost, "/v1/auth/register", bytes.NewBufferString(`{"name":"Tester","email":"t@example.com","password":"Cedar#Harbor94!","password_confirmation":"Cedar#Harbor94!","captcha_token":"ok-token"}`)))
+	if recValid.Code != http.StatusCreated {
+		t.Fatalf("expected 201 on valid captcha_token, got code=%d body=%s", recValid.Code, recValid.Body.String())
 	}
 }

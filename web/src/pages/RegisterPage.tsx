@@ -4,6 +4,7 @@ import { PageSkeleton } from "../components/LoadingSkeleton";
 import { OtpVerificationView } from "../components/auth/OtpVerificationView";
 import { PasswordChecklist } from "../components/auth/PasswordChecklist";
 import { PasswordInput } from "../components/auth/PasswordInput";
+import { TurnstileWidget } from "../components/auth/TurnstileWidget";
 import { useAuth } from "../hooks/useAuth";
 import { useLocale } from "../hooks/useLocale";
 import { ApiError } from "../services/api.client";
@@ -11,7 +12,7 @@ import * as authService from "../services/auth.service";
 import { evaluatePasswordPolicy, isValidDisplayName, normalizeDisplayName } from "../utils/passwordPolicy";
 
 export function RegisterPage() {
-  const { user, loading, verifyOtp } = useAuth();
+  const { user, loading, config, verifyOtp } = useAuth();
   const { t } = useLocale();
   const copy = t.authUi;
 
@@ -24,6 +25,8 @@ export function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailExistsError, setEmailExistsError] = useState<string | null>(null);
@@ -60,6 +63,11 @@ export function RegisterPage() {
       setError(copy.passwordPolicy.policyError);
       return;
     }
+    const captchaRequired = Boolean(config?.turnstile_site_key?.trim());
+    if (captchaRequired && !captchaToken) {
+      setError(copy.common.captchaRequiredError);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -68,12 +76,14 @@ export function RegisterPage() {
         email: cleanEmail,
         password,
         password_confirmation: confirmPassword,
+        captcha_token: captchaToken ?? undefined,
       });
       setPendingOtp({
         email: res.email,
         cooldown: res.resend_after_seconds || 60,
       });
     } catch (err: unknown) {
+      setCaptchaResetKey((k) => k + 1);
       if (err instanceof ApiError) {
         if (err.code === "EMAIL_EXISTS" || err.code === "EMAIL_EXISTS_GOOGLE" || err.status === 409) {
           setEmailExistsError(copy.registerPage.duplicateEmail);
@@ -180,6 +190,12 @@ export function RegisterPage() {
               </div>
 
               <PasswordChecklist password={password} email={email} name={name} />
+
+              <TurnstileWidget
+                resetKey={captchaResetKey}
+                onTokenChange={setCaptchaToken}
+                onError={setError}
+              />
 
               <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
                 {submitting ? copy.registerPage.submitting : copy.registerPage.submitButton}

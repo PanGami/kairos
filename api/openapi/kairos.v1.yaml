@@ -22,13 +22,25 @@ paths:
         "503": { description: Not ready }
   /v1/auth/config:
     get:
-      summary: Public auth client configuration (Google OAuth client ID and dev bypass status)
+      summary: Public auth client configuration (Google OAuth client ID, Turnstile site key, and dev bypass status)
       responses:
         "200":
           description: Auth configuration
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthConfig" }
+  /v1/auth/google/state:
+    get:
+      summary: Issue a signed OAuth anti-CSRF state token and HttpOnly cookie
+      responses:
+        "200":
+          description: OAuth state token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state: { type: string }
   /v1/auth/google:
     post:
       summary: Exchange a Google ID token for a KAIROS session token
@@ -90,6 +102,7 @@ paths:
                 email: { type: string, format: email }
                 password: { type: string }
                 password_confirmation: { type: string }
+                captcha_token: { type: string }
       responses:
         "201": { description: Verification OTP sent }
         "400": { description: Validation or password policy failure }
@@ -167,6 +180,7 @@ paths:
               required: [email]
               properties:
                 email: { type: string, format: email }
+                captcha_token: { type: string }
       responses:
         "200": { description: Uniform acceptance message }
         "429": { description: Rate limited }
@@ -504,6 +518,7 @@ components:
       properties:
         google_client_id: { type: string }
         dev_login_enabled: { type: boolean }
+        turnstile_site_key: { type: string }
     SignInResponse:
       type: object
       properties:

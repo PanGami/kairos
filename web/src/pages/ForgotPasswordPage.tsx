@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PasswordChecklist } from "../components/auth/PasswordChecklist";
 import { PasswordInput } from "../components/auth/PasswordInput";
+import { TurnstileWidget } from "../components/auth/TurnstileWidget";
 import { useAuth } from "../hooks/useAuth";
 import { useLocale } from "../hooks/useLocale";
 import { ApiError } from "../services/api.client";
@@ -10,7 +11,7 @@ import { evaluatePasswordPolicy } from "../utils/passwordPolicy";
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const { clearLocalSession } = useAuth();
+  const { config, clearLocalSession } = useAuth();
   const { t } = useLocale();
   const copy = t.authUi;
 
@@ -24,6 +25,8 @@ export function ForgotPasswordPage() {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [countdown, setCountdown] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
@@ -48,15 +51,22 @@ export function ForgotPasswordPage() {
       return;
     }
 
+    const captchaRequired = Boolean(config?.turnstile_site_key?.trim());
+    if (captchaRequired && !captchaToken) {
+      setError(copy.common.captchaRequiredError);
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     setInfo(null);
     try {
-      const res = await authService.forgotPassword(cleanEmail);
+      const res = await authService.forgotPassword(cleanEmail, captchaToken ?? undefined);
       setInfo(copy.forgotPage.uniformSentBanner);
       setCountdown(res.resend_after_seconds || 60);
       setStep("reset");
     } catch (err: unknown) {
+      setCaptchaResetKey((k) => k + 1);
       setError(err instanceof Error ? err.message : copy.common.emailPlaceholder);
     } finally {
       setSubmitting(false);
@@ -160,6 +170,12 @@ export function ForgotPasswordPage() {
                 required
               />
             </div>
+
+            <TurnstileWidget
+              resetKey={captchaResetKey}
+              onTokenChange={setCaptchaToken}
+              onError={setError}
+            />
 
             <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
               {submitting ? copy.forgotPage.sendingCode : copy.forgotPage.sendCodeButton}

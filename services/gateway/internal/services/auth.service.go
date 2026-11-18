@@ -14,8 +14,9 @@ import (
 )
 
 type AuthConfig struct {
-	GoogleClientID  string `json:"google_client_id"`
-	DevLoginEnabled bool   `json:"dev_login_enabled"`
+	GoogleClientID   string `json:"google_client_id"`
+	DevLoginEnabled  bool   `json:"dev_login_enabled"`
+	TurnstileSiteKey string `json:"turnstile_site_key,omitempty"`
 }
 
 type UserDTO struct {
@@ -118,9 +119,10 @@ func ParseAuthError(err error) *ServiceError {
 }
 
 type AuthService struct {
-	client          authv1.AuthServiceClient
-	googleClientID  string
-	devLoginEnabled bool
+	client           authv1.AuthServiceClient
+	googleClientID   string
+	devLoginEnabled  bool
+	turnstileSiteKey string
 }
 
 func NewAuthService(client authv1.AuthServiceClient, googleClientID string, devLoginEnabled bool) *AuthService {
@@ -131,10 +133,15 @@ func NewAuthService(client authv1.AuthServiceClient, googleClientID string, devL
 	}
 }
 
+func (s *AuthService) SetTurnstileSiteKey(siteKey string) {
+	s.turnstileSiteKey = strings.TrimSpace(siteKey)
+}
+
 func (s *AuthService) Config() AuthConfig {
 	return AuthConfig{
-		GoogleClientID:  s.googleClientID,
-		DevLoginEnabled: s.devLoginEnabled,
+		GoogleClientID:   s.googleClientID,
+		DevLoginEnabled:  s.devLoginEnabled,
+		TurnstileSiteKey: s.turnstileSiteKey,
 	}
 }
 

@@ -1094,6 +1094,40 @@
   flex-wrap: wrap;
 }
 
+.turnstile-wrap {
+  display: block;
+  width: 100%;
+  min-height: 65px;
+  overflow: visible;
+}
+
+.turnstile-wrap iframe {
+  display: block;
+  width: 100%;
+}
+
+.google-auth-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.google-gsi-slot {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-gsi-slot-compact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+
 @media (max-width: 960px) {
   .admin-search-form {
     max-width: none;

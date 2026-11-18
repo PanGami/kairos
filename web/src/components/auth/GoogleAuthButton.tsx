@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useLocale } from "../../hooks/useLocale";
+import { useTheme } from "../../hooks/useTheme";
 import * as authService from "../../services/auth.service";
 
 interface GoogleAccountsID {
   initialize: (cfg: { client_id: string; callback: (res: { credential: string }) => void }) => void;
-  renderButton: (el: HTMLElement, opts: Record<string, string>) => void;
+  renderButton: (el: HTMLElement, opts: Record<string, string | number>) => void;
 }
 
 declare global {
@@ -35,6 +36,7 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const { config, loginWithToken } = useAuth();
   const { t } = useLocale();
+  const [theme] = useTheme();
   const [submitting, setSubmitting] = useState(false);
   const btnRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +49,12 @@ export function GoogleAuthButton({
     let cancelled = false;
     const renderGoogleButton = () => {
       if (cancelled || !btnRef.current || !window.google?.accounts?.id) return;
+      const containerWidth = btnRef.current.clientWidth;
+      const targetWidth =
+        buttonSize === "medium"
+          ? Math.min(Math.max(containerWidth || 240, 200), 280)
+          : Math.min(Math.max(containerWidth || 360, 240), 400);
+
       btnRef.current.innerHTML = "";
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -64,10 +72,12 @@ export function GoogleAuthButton({
         },
       });
       window.google.accounts.id.renderButton(btnRef.current, {
-        theme: "outline",
+        theme: theme === "light" ? "outline" : "filled_black",
         size: buttonSize,
         text: "signin_with",
         shape: "rectangular",
+        width: targetWidth,
+        logo_alignment: "center",
       });
     };
 
@@ -102,6 +112,7 @@ export function GoogleAuthButton({
     config?.google_client_id,
     handleToken,
     onError,
+    theme,
     t.login.googleSignInFailed,
     t.login.scriptLoadError,
   ]);
