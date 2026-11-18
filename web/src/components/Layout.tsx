@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useLocale } from "../hooks/useLocale";
 import { useTheme } from "../hooks/useTheme";
 import type { FooterTopicKey } from "../i18n/messages";
+import { resolveAvatarSrc } from "../utils/passwordPolicy";
 import { Disclaimer } from "./Disclaimer";
 import { FooterInfoModal } from "./FooterInfoModal";
 
@@ -134,10 +135,22 @@ export function Layout() {
 
             {user ? (
               <>
-                <span className="pill pill-verified">{t.nav.verified}</span>
-                <span className="user-identity" title={user.email}>
-                  {user.name || user.email}
-                </span>
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) => `nav-profile-link${isActive ? " active" : ""}`}
+                  aria-label={`${t.nav.profile}: ${user.name || user.email}`}
+                  title={user.email}
+                >
+                  <img
+                    src={resolveAvatarSrc(user.avatar_key, user.picture_url)}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="topbar-avatar"
+                    aria-hidden="true"
+                  />
+                  <span className="user-identity">{user.name || user.email}</span>
+                </NavLink>
                 <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
                   {t.nav.signOut}
                 </button>

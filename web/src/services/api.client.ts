@@ -1,11 +1,25 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 export const SESSION_STORAGE_KEY = "kairos-session-token";
 
+interface ErrorPayload {
+  error?: string;
+  code?: string;
+  email?: string;
+  retry_after_seconds?: number;
+}
+
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  code?: string;
+  email?: string;
+  retryAfterSeconds?: number;
+
+  constructor(status: number, message: string, meta?: ErrorPayload) {
     super(message);
     this.status = status;
+    this.code = meta?.code;
+    this.email = meta?.email;
+    this.retryAfterSeconds = meta?.retry_after_seconds;
   }
 }
 
@@ -28,13 +42,24 @@ function buildHeaders(extra?: Record<string, string>): HeadersInit {
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    const msg =
+    let payload: ErrorPayload | undefined;
+    const rawText = await res.text();
+    if (rawText) {
+      try {
+        payload = JSON.parse(rawText) as ErrorPayload;
+      } catch {
+        payload = undefined;
+      }
+    }
+    const fallback =
       res.status === 401
         ? "Unauthorized"
         : res.status === 404
           ? "Not found"
-          : `Request failed (${res.status})`;
-    throw new ApiError(res.status, msg);
+          : rawText && !payload
+            ? rawText.trim()
+            : `Request failed (${res.status})`;
+    throw new ApiError(res.status, payload?.error || fallback, payload);
   }
   return (await res.json()) as T;
 }
@@ -52,6 +77,17 @@ export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T>
 export async function postJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
+    headers: buildHeaders({ "Content-Type": "application/json" }),
+    credentials: "include",
+    body: JSON.stringify(body),
+    signal,
+  });
+  return handleResponse<T>(res);
+}
+
+export async function patchJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "PATCH",
     headers: buildHeaders({ "Content-Type": "application/json" }),
     credentials: "include",
     body: JSON.stringify(body),

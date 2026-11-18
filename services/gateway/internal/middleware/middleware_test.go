@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestWrapRequestIDAndCORS(t *testing.T) {
@@ -85,5 +86,22 @@ func TestWrapRateLimiterReturns429(t *testing.T) {
 	h.ServeHTTP(recHealth, reqHealth)
 	if recHealth.Code != http.StatusOK {
 		t.Fatalf("expected /healthz to bypass rate limit, got %d", recHealth.Code)
+	}
+}
+
+func TestAuthRateLimiterFixedWindow(t *testing.T) {
+	now := time.Date(2026, 11, 18, 12, 0, 0, 0, time.UTC)
+	l := NewAuthRateLimiter(2, time.Minute)
+	l.now = func() time.Time { return now }
+
+	if !l.Allow("ip:login:1.2.3.4") || !l.Allow("ip:login:1.2.3.4") {
+		t.Fatalf("expected first 2 calls to pass")
+	}
+	if l.Allow("ip:login:1.2.3.4") {
+		t.Fatalf("expected 3rd call in window to be blocked")
+	}
+	now = now.Add(61 * time.Second)
+	if !l.Allow("ip:login:1.2.3.4") {
+		t.Fatalf("expected call after window reset to pass")
 	}
 }

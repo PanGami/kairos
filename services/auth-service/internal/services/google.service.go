@@ -115,14 +115,10 @@ func (g *GoogleTokenVerifier) VerifyIDToken(ctx context.Context, idToken string)
 		return GoogleIdentity{}, ErrInvalidGoogleToken
 	}
 
-	name := payload.Name
-	if name == "" {
-		name = payload.Email
-	}
 	return GoogleIdentity{
 		Sub:     payload.Sub,
-		Email:   payload.Email,
-		Name:    name,
+		Email:   strings.ToLower(strings.TrimSpace(payload.Email)),
+		Name:    strings.TrimSpace(payload.Name),
 		Picture: payload.Picture,
 	}, nil
 }

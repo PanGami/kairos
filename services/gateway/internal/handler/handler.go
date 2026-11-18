@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -21,14 +20,32 @@ import (
 )
 
 type Handler struct {
-	instruments *services.InstrumentService
-	forecasts   *services.ForecastService
-	auth        *services.AuthService
-	adminKey    string
+	instruments  *services.InstrumentService
+	forecasts    *services.ForecastService
+	auth         *services.AuthService
+	adminKey     string
+	authLimiter  *middleware.AuthRateLimiter
+	cookieSecure bool
 }
 
 func New(inst *services.InstrumentService, fc *services.ForecastService, auth *services.AuthService, adminKey string) *Handler {
-	return &Handler{instruments: inst, forecasts: fc, auth: auth, adminKey: adminKey}
+	return &Handler{
+		instruments: inst,
+		forecasts:   fc,
+		auth:        auth,
+		adminKey:    adminKey,
+		authLimiter: middleware.NewAuthRateLimiter(20, 10*time.Minute),
+	}
+}
+
+func (h *Handler) SetCookieSecure(secure bool) {
+	h.cookieSecure = secure
+}
+
+func (h *Handler) SetAuthLimiter(limiter *middleware.AuthRateLimiter) {
+	if limiter != nil {
+		h.authLimiter = limiter
+	}
 }
 
 func grpcCtx(r *http.Request, timeout time.Duration) (context.Context, context.CancelFunc) {
@@ -77,86 +94,6 @@ func (h *Handler) Readyz(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("ready"))
-}
-
-func (h *Handler) AuthConfig(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, h.auth.Config())
-}
-
-func (h *Handler) AuthGoogle(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		IDToken string `json:"id_token"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&body); err != nil || strings.TrimSpace(body.IDToken) == "" {
-		http.Error(w, "missing id_token", http.StatusBadRequest)
-		return
-	}
-
-	ctx, cancel := grpcCtx(r, 8*time.Second)
-	defer cancel()
-	res, err := h.auth.SignInWithGoogle(ctx, body.IDToken)
-	if err != nil {
-		if status.Code(err) == codes.Unauthenticated {
-			http.Error(w, "invalid google token", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     middleware.SessionCookieName,
-		Value:    res.SessionToken,
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   7 * 86400,
-	})
-	writeJSON(w, http.StatusOK, res)
-}
-
-func (h *Handler) AuthMe(w http.ResponseWriter, r *http.Request) {
-	if user, ok := middleware.UserFromContext(r.Context()); ok {
-		writeJSON(w, http.StatusOK, map[string]any{"user": user})
-		return
-	}
-	token := middleware.ExtractSessionToken(r)
-	if token == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	ctx, cancel := grpcCtx(r, 3*time.Second)
-	defer cancel()
-	user, valid, err := h.auth.ValidateSession(ctx, token)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
-	}
-	if !valid {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"user": user})
-}
-
-func (h *Handler) AuthLogout(w http.ResponseWriter, r *http.Request) {
-	if token := middleware.ExtractSessionToken(r); token != "" {
-		ctx, cancel := grpcCtx(r, 3*time.Second)
-		defer cancel()
-		if err := h.auth.SignOut(ctx, token); err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return
-		}
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     middleware.SessionCookieName,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   -1,
-	})
-	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
 func (h *Handler) ListInstruments(w http.ResponseWriter, r *http.Request) {

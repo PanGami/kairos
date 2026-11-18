@@ -2,12 +2,18 @@
 export type ReliabilityTier = "full" | "low" | "insufficient";
 export type RunStatus = "ok" | "degraded" | "failed";
 export type Horizon = 7 | 30;
+export type OTPPurpose = "register_verify" | "reset_password" | "set_password";
 
 export interface User {
   user_id: string;
   email: string;
   name: string;
   picture_url: string;
+  avatar_key: string;
+  role: string;
+  email_verified: boolean;
+  google_linked: boolean;
+  has_password: boolean;
 }
 
 export interface AuthConfig {
@@ -19,6 +25,23 @@ export interface SignInResponse {
   user: User;
   session_token: string;
   expires_at: string;
+}
+
+export interface RegisterResponse {
+  email: string;
+  resend_after_seconds: number;
+  expires_in_seconds: number;
+}
+
+export interface OtpSentResponse {
+  resend_after_seconds: number;
+  expires_in_seconds: number;
+}
+
+export interface ForgotPasswordResponse {
+  accepted: boolean;
+  message: string;
+  resend_after_seconds: number;
 }
 
 export interface Instrument {

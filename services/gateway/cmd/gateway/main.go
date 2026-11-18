@@ -67,6 +67,7 @@ func main() {
 		authSvc,
 		env("ADMIN_API_KEY", "change_me_admin_key"),
 	)
+	h.SetCookieSecure(strings.EqualFold(env("AUTH_COOKIE_SECURE", "false"), "true"))
 
 	mux := routes.NewRouter(h, authSvc)
 

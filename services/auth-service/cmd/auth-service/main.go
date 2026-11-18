@@ -69,7 +69,16 @@ func main() {
 
 	devBypass := strings.EqualFold(env("AUTH_DEV_BYPASS", "false"), "true")
 	verifier := services.NewGoogleTokenVerifier(os.Getenv("GOOGLE_CLIENT_ID"), devBypass)
-	sessionSvc := services.NewSessionService(verifier, store)
+	smtpUser := os.Getenv("SMTP_USER")
+	smtpPass := os.Getenv("SMTP_PASSWORD")
+	emailSvc := services.NewSMTPEmailService(
+		env("SMTP_HOST", "smtp.gmail.com"),
+		env("SMTP_PORT", "587"),
+		smtpUser,
+		smtpPass,
+		os.Getenv("SMTP_FROM"),
+	)
+	sessionSvc := services.NewSessionService(verifier, store, emailSvc)
 	authHandler := handler.NewAuthServicer(sessionSvc)
 
 	srv := grpc.NewServer()
@@ -84,7 +93,11 @@ func main() {
 	}
 
 	go func() {
-		slog.Info("auth-service started", "addr", addr, "dev_bypass", devBypass)
+		slog.Info("auth-service started",
+			"addr", addr,
+			"dev_bypass", devBypass,
+			"smtp_configured", strings.TrimSpace(smtpUser) != "" && strings.TrimSpace(smtpPass) != "",
+		)
 		if err := srv.Serve(lis); err != nil {
 			slog.Error("serve", "err", err)
 			os.Exit(1)

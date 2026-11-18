@@ -1,3 +1,4 @@
+import { authUiEn, authUiId, type AuthUiMessages } from "./auth.messages";
 import {
   chartUiEn,
   chartUiId,
@@ -43,6 +44,8 @@ export interface Messages {
     signIn: string;
     signOut: string;
     verified: string;
+    unverified: string;
+    profile: string;
     switchToLight: string;
     switchToDark: string;
     languageGroupLabel: string;
@@ -301,6 +304,7 @@ export interface Messages {
   chartUi: ChartUiMessages;
   tickerSearch: TickerSearchMessages;
   dashboardChartHover: DashboardChartHoverMessages;
+  authUi: AuthUiMessages;
 }
 
 const en: Messages = {
@@ -314,6 +318,8 @@ const en: Messages = {
     signIn: "Sign In",
     signOut: "Sign Out",
     verified: "VERIFIED",
+    unverified: "UNVERIFIED",
+    profile: "Profile",
     switchToLight: "Switch to light mode",
     switchToDark: "Switch to dark mode",
     languageGroupLabel: "Language selection",
@@ -924,6 +930,7 @@ const en: Messages = {
   chartUi: chartUiEn,
   tickerSearch: tickerSearchEn,
   dashboardChartHover: dashboardChartHoverEn,
+  authUi: authUiEn,
 };
 
 const id: Messages = {
@@ -937,6 +944,8 @@ const id: Messages = {
     signIn: "Masuk",
     signOut: "Keluar",
     verified: "TERVERIFIKASI",
+    unverified: "BELUM TERVERIFIKASI",
+    profile: "Profil",
     switchToLight: "Ubah ke mode terang",
     switchToDark: "Ubah ke mode gelap",
     languageGroupLabel: "Pilihan bahasa",
@@ -1547,6 +1556,7 @@ const id: Messages = {
   chartUi: chartUiId,
   tickerSearch: tickerSearchId,
   dashboardChartHover: dashboardChartHoverId,
+  authUi: authUiId,
 };
 
 export const MESSAGES: Record<Locale, Messages> = { en, id };

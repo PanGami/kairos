@@ -3,8 +3,8 @@ info:
   title: KAIROS Gateway API
   version: 1.0.0
   description: >
-    REST API served by the gateway to the browser. Dashboard forecast routes require a valid session
-    obtained via Google Sign-In (/v1/auth/google). Admin refresh requires X-Admin-Api-Key.
+    REST API served by the gateway to the browser. Forecast endpoints require a valid session
+    for restricted tickers (obtained via /v1/auth/google or /v1/auth/login). Admin refresh requires X-Admin-Api-Key.
     The product is an end-of-day risk monitor, not investment advice.
 servers:
   - url: /
@@ -41,6 +41,7 @@ paths:
               required: [id_token]
               properties:
                 id_token: { type: string }
+                state: { type: string }
       responses:
         "200":
           description: Signed in
@@ -48,6 +49,229 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/SignInResponse" }
         "401": { description: Invalid Google token }
+  /v1/auth/google/link:
+    post:
+      summary: Activate Login Via Google on an existing authenticated account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_token]
+              properties:
+                id_token: { type: string }
+                state: { type: string }
+      responses:
+        "200":
+          description: Google login activated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Google email mismatch or invalid token }
+        "401": { description: Unauthorized }
+  /v1/auth/register:
+    post:
+      summary: Register a new unverified account and send a 6-digit verification OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "201": { description: Verification OTP sent }
+        "400": { description: Validation or password policy failure }
+        "409": { description: Email already registered }
+        "429": { description: Rate limited }
+  /v1/auth/login:
+    post:
+      summary: Sign in with normalized email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SignInResponse" }
+        "401": { description: Invalid credentials }
+        "403": { description: Email unverified (OTP sent) or Google-only account }
+        "429": { description: Rate limited }
+  /v1/auth/otp/verify:
+    post:
+      summary: Verify 6-digit registration OTP and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, purpose, code]
+              properties:
+                email: { type: string, format: email }
+                purpose: { type: string, enum: [register_verify] }
+                code: { type: string }
+      responses:
+        "200":
+          description: Verified and signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SignInResponse" }
+        "400": { description: Invalid or expired code }
+        "429": { description: Rate limited }
+  /v1/auth/otp/resend:
+    post:
+      summary: Resend 6-digit OTP respecting cooldown and hourly caps
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, purpose]
+              properties:
+                email: { type: string, format: email }
+                purpose: { type: string, enum: [register_verify, reset_password, set_password] }
+      responses:
+        "200": { description: OTP request accepted }
+        "429": { description: Cooldown active or hourly limit reached }
+  /v1/auth/password/forgot:
+    post:
+      summary: Request password reset OTP (uniform response)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200": { description: Uniform acceptance message }
+        "429": { description: Rate limited }
+  /v1/auth/password/reset:
+    post:
+      summary: Reset password with OTP and invalidate all existing sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, new_password, password_confirmation]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string }
+                new_password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "200": { description: Password reset complete }
+        "400": { description: Invalid OTP or password policy violation }
+        "429": { description: Rate limited }
+  /v1/auth/profile:
+    patch:
+      summary: Update current user's name and static avatar key
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, avatar_key]
+              properties:
+                name: { type: string }
+                avatar_key: { type: string }
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Invalid name or avatar_key }
+        "401": { description: Unauthorized }
+  /v1/auth/password/change:
+    post:
+      summary: Change password for user with an existing password and revoke other sessions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password, password_confirmation]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "200": { description: Password updated }
+        "400": { description: Policy violation or current password mismatch }
+        "401": { description: Unauthorized }
+  /v1/auth/password/set/request-otp:
+    post:
+      summary: Send OTP to current Google-only user's email to set an initial password
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: OTP sent }
+        "400": { description: Password already configured }
+        "401": { description: Unauthorized }
+        "429": { description: Cooldown active or hourly limit reached }
+  /v1/auth/password/set:
+    post:
+      summary: Set initial password for a Google-only account after OTP verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, new_password, password_confirmation]
+              properties:
+                code: { type: string }
+                new_password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "200":
+          description: Initial password set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Invalid OTP or password policy violation }
+        "401": { description: Unauthorized }
   /v1/auth/me:
     get:
       summary: Current authenticated user profile
@@ -164,6 +388,11 @@ components:
         email: { type: string, format: email }
         name: { type: string }
         picture_url: { type: string }
+        avatar_key: { type: string }
+        role: { type: string }
+        email_verified: { type: boolean }
+        google_linked: { type: boolean }
+        has_password: { type: boolean }
     AuthConfig:
       type: object
       properties:

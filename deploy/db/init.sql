@@ -96,21 +96,49 @@ CREATE TABLE IF NOT EXISTS api_keys (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ---- auth-service: users, user_sessions ----
+-- ---- auth-service: users, user_sessions, user_otps, auth_audit_logs ----
 CREATE TABLE IF NOT EXISTS users (
-  user_id       TEXT PRIMARY KEY,
-  google_sub    TEXT UNIQUE NOT NULL,
-  email         TEXT UNIQUE NOT NULL,
-  name          TEXT NOT NULL,
-  picture_url   TEXT NOT NULL DEFAULT '',
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_login_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  user_id        TEXT PRIMARY KEY,
+  google_sub     TEXT UNIQUE,
+  email          TEXT UNIQUE NOT NULL,
+  name           TEXT NOT NULL,
+  picture_url    TEXT NOT NULL DEFAULT '/avatars/avatar-1.png',
+  avatar_key     TEXT NOT NULL DEFAULT 'avatar-1',
+  password_hash  TEXT NOT NULL DEFAULT '',
+  email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  google_linked  BOOLEAN NOT NULL DEFAULT FALSE,
+  role           TEXT NOT NULL DEFAULT 'user',
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_login_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS user_sessions (
   token_hash TEXT PRIMARY KEY,
   user_id    TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS user_otps (
+  id           BIGSERIAL PRIMARY KEY,
+  email        TEXT NOT NULL,
+  purpose      TEXT NOT NULL CHECK (purpose IN ('register_verify', 'reset_password', 'set_password')),
+  code_hash    TEXT NOT NULL,
+  attempts     INTEGER NOT NULL DEFAULT 0,
+  max_attempts INTEGER NOT NULL DEFAULT 5,
+  expires_at   TIMESTAMPTZ NOT NULL,
+  consumed_at  TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_otps_email_purpose ON user_otps (email, purpose, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS auth_audit_logs (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    TEXT,
+  email      TEXT,
+  event_type TEXT NOT NULL,
+  detail     TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

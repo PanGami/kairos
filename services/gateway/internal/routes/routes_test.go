@@ -69,7 +69,7 @@ func (m *mockForecastClient) GetHistory(_ context.Context, req *forecastv1.GetHi
 		Actual: []*forecastv1.ActualPoint{
 			{Date: "2026-11-10", Close: 2040, Open: 2020, High: 2060, Low: 2010, Volume: 1500000},
 		},
-		Backtest:     []*forecastv1.BacktestPoint{{AsOfDate: "2026-10-01", HorizonDays: 7, Median: 2100, Lower80: 1950, Upper80: 2250}},
+		Backtest: []*forecastv1.BacktestPoint{{AsOfDate: "2026-10-01", HorizonDays: 7, Median: 2100, Lower80: 1950, Upper80: 2250}},
 	}, nil
 }
 
@@ -86,19 +86,35 @@ type mockAuthClient struct {
 	revoked bool
 }
 
+func sampleUser() *authv1.User {
+	return &authv1.User{
+		UserId:        "google:dev",
+		Email:         "analyst@kairos",
+		Name:          "KAIROS Analyst",
+		PictureUrl:    "/avatars/avatar-1.png",
+		AvatarKey:     "avatar-1",
+		Role:          "user",
+		EmailVerified: true,
+		GoogleLinked:  true,
+		HasPassword:   false,
+	}
+}
+
 func (m *mockAuthClient) SignInWithGoogle(_ context.Context, req *authv1.SignInWithGoogleRequest, _ ...grpc.CallOption) (*authv1.SignInWithGoogleResponse, error) {
 	if req.GetIdToken() == "bad" {
 		return nil, status.Error(codes.Unauthenticated, "invalid google token")
 	}
 	return &authv1.SignInWithGoogleResponse{
-		User: &authv1.User{
-			UserId: "google:dev",
-			Email:  "analyst@kairos.local",
-			Name:   "KAIROS Analyst",
-		},
+		User:         sampleUser(),
 		SessionToken: "test-session-token",
 		ExpiresAt:    "2026-11-22T00:00:00Z",
 	}, nil
+}
+
+func (m *mockAuthClient) LinkGoogle(_ context.Context, _ *authv1.LinkGoogleRequest, _ ...grpc.CallOption) (*authv1.LinkGoogleResponse, error) {
+	u := sampleUser()
+	u.GoogleLinked = true
+	return &authv1.LinkGoogleResponse{User: u}, nil
 }
 
 func (m *mockAuthClient) ValidateSession(_ context.Context, req *authv1.ValidateSessionRequest, _ ...grpc.CallOption) (*authv1.ValidateSessionResponse, error) {
@@ -107,17 +123,68 @@ func (m *mockAuthClient) ValidateSession(_ context.Context, req *authv1.Validate
 	}
 	return &authv1.ValidateSessionResponse{
 		Valid: true,
-		User: &authv1.User{
-			UserId: "google:dev",
-			Email:  "analyst@kairos.local",
-			Name:   "KAIROS Analyst",
-		},
+		User:  sampleUser(),
 	}, nil
 }
 
 func (m *mockAuthClient) SignOut(_ context.Context, _ *authv1.SignOutRequest, _ ...grpc.CallOption) (*authv1.SignOutResponse, error) {
 	m.revoked = true
 	return &authv1.SignOutResponse{Ok: true}, nil
+}
+
+func (m *mockAuthClient) Register(_ context.Context, req *authv1.RegisterRequest, _ ...grpc.CallOption) (*authv1.RegisterResponse, error) {
+	if req.GetEmail() == "dup@example.com" {
+		return nil, status.Error(codes.AlreadyExists, "EMAIL_EXISTS|0|dup@example.com|Email ini sudah terdaftar")
+	}
+	return &authv1.RegisterResponse{Email: req.GetEmail(), ResendAfterSeconds: 60, ExpiresInSeconds: 600}, nil
+}
+
+func (m *mockAuthClient) VerifyOTP(_ context.Context, req *authv1.VerifyOTPRequest, _ ...grpc.CallOption) (*authv1.VerifyOTPResponse, error) {
+	if req.GetCode() != "123456" {
+		return nil, status.Error(codes.InvalidArgument, "INVALID_OTP|0||Kode salah atau sudah kedaluwarsa")
+	}
+	return &authv1.VerifyOTPResponse{User: sampleUser(), SessionToken: "test-session-token", ExpiresAt: "2026-11-22T00:00:00Z"}, nil
+}
+
+func (m *mockAuthClient) ResendOTP(_ context.Context, _ *authv1.ResendOTPRequest, _ ...grpc.CallOption) (*authv1.ResendOTPResponse, error) {
+	return &authv1.ResendOTPResponse{ResendAfterSeconds: 60, ExpiresInSeconds: 600}, nil
+}
+
+func (m *mockAuthClient) LoginWithPassword(_ context.Context, req *authv1.LoginWithPasswordRequest, _ ...grpc.CallOption) (*authv1.LoginWithPasswordResponse, error) {
+	if req.GetPassword() != "ValidPass1!" {
+		return nil, status.Error(codes.Unauthenticated, "INVALID_CREDENTIALS|0||Email atau password salah")
+	}
+	return &authv1.LoginWithPasswordResponse{User: sampleUser(), SessionToken: "test-session-token", ExpiresAt: "2026-11-22T00:00:00Z"}, nil
+}
+
+func (m *mockAuthClient) ForgotPassword(_ context.Context, _ *authv1.ForgotPasswordRequest, _ ...grpc.CallOption) (*authv1.ForgotPasswordResponse, error) {
+	return &authv1.ForgotPasswordResponse{Accepted: true, ResendAfterSeconds: 60}, nil
+}
+
+func (m *mockAuthClient) ResetPassword(_ context.Context, _ *authv1.ResetPasswordRequest, _ ...grpc.CallOption) (*authv1.ResetPasswordResponse, error) {
+	return &authv1.ResetPasswordResponse{Ok: true}, nil
+}
+
+func (m *mockAuthClient) UpdateProfile(_ context.Context, req *authv1.UpdateProfileRequest, _ ...grpc.CallOption) (*authv1.UpdateProfileResponse, error) {
+	u := sampleUser()
+	u.Name = req.GetName()
+	u.AvatarKey = req.GetAvatarKey()
+	u.PictureUrl = "/avatars/" + req.GetAvatarKey() + ".png"
+	return &authv1.UpdateProfileResponse{User: u}, nil
+}
+
+func (m *mockAuthClient) ChangePassword(_ context.Context, _ *authv1.ChangePasswordRequest, _ ...grpc.CallOption) (*authv1.ChangePasswordResponse, error) {
+	return &authv1.ChangePasswordResponse{Ok: true}, nil
+}
+
+func (m *mockAuthClient) RequestSetPasswordOTP(_ context.Context, _ *authv1.RequestSetPasswordOTPRequest, _ ...grpc.CallOption) (*authv1.RequestSetPasswordOTPResponse, error) {
+	return &authv1.RequestSetPasswordOTPResponse{Email: "analyst@kairos", ResendAfterSeconds: 60, ExpiresInSeconds: 600}, nil
+}
+
+func (m *mockAuthClient) SetPassword(_ context.Context, _ *authv1.SetPasswordRequest, _ ...grpc.CallOption) (*authv1.SetPasswordResponse, error) {
+	u := sampleUser()
+	u.HasPassword = true
+	return &authv1.SetPasswordResponse{User: u}, nil
 }
 
 func newTestRouter(t *testing.T) *http.ServeMux {
@@ -151,18 +218,82 @@ func authedReq(method, target string) *http.Request {
 func TestGatewayRoutes(t *testing.T) {
 	mux := newTestRouter(t)
 
-	// GET /healthz -> 200
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 	if rec.Code != http.StatusOK || rec.Body.String() != "ok" {
 		t.Fatalf("/healthz unexpected: code=%d body=%q", rec.Code, rec.Body.String())
 	}
 
-	// GET /v1/auth/config -> 200
 	recCfg := httptest.NewRecorder()
 	mux.ServeHTTP(recCfg, httptest.NewRequest(http.MethodGet, "/v1/auth/config", nil))
 	if recCfg.Code != http.StatusOK {
 		t.Fatalf("/v1/auth/config expected 200, got %d", recCfg.Code)
+	}
+
+	// GET /v1/auth/google/state issues cookie & state; mismatch rejected with 400.
+	recState := httptest.NewRecorder()
+	mux.ServeHTTP(recState, httptest.NewRequest(http.MethodGet, "/v1/auth/google/state", nil))
+	if recState.Code != http.StatusOK || len(recState.Result().Cookies()) == 0 {
+		t.Fatalf("expected state cookie on /v1/auth/google/state, got code=%d", recState.Code)
+	}
+	var statePayload struct {
+		State string `json:"state"`
+	}
+	_ = json.Unmarshal(recState.Body.Bytes(), &statePayload)
+	badStateReq := httptest.NewRequest(http.MethodPost, "/v1/auth/google", bytes.NewBufferString(`{"id_token":"dev:analyst@kairos","state":"wrong"}`))
+	badStateReq.AddCookie(recState.Result().Cookies()[0])
+	recBadState := httptest.NewRecorder()
+	mux.ServeHTTP(recBadState, badStateReq)
+	if recBadState.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 on mismatched OAuth state, got %d", recBadState.Code)
+	}
+
+	goodGoogleReq := httptest.NewRequest(http.MethodPost, "/v1/auth/google", bytes.NewBufferString(`{"id_token":"dev:analyst@kairos:KAIROS Analyst","state":"`+statePayload.State+`"}`))
+	goodGoogleReq.AddCookie(recState.Result().Cookies()[0])
+	recLogin := httptest.NewRecorder()
+	mux.ServeHTTP(recLogin, goodGoogleReq)
+	if recLogin.Code != http.StatusOK {
+		t.Fatalf("/v1/auth/google expected 200, got %d (%s)", recLogin.Code, recLogin.Body.String())
+	}
+
+	// Register, conflict, login, forgot password, and profile update (ignores role mass assignment).
+	recRegDup := httptest.NewRecorder()
+	mux.ServeHTTP(recRegDup, httptest.NewRequest(http.MethodPost, "/v1/auth/register", bytes.NewBufferString(`{"name":"Dup","email":"dup@example.com","password":"ValidPass1!","password_confirmation":"ValidPass1!"}`)))
+	if recRegDup.Code != http.StatusConflict {
+		t.Fatalf("expected 409 on duplicate email register, got %d", recRegDup.Code)
+	}
+
+	recRegOK := httptest.NewRecorder()
+	mux.ServeHTTP(recRegOK, httptest.NewRequest(http.MethodPost, "/v1/auth/register", bytes.NewBufferString(`{"name":"New User","email":"new@example.com","password":"ValidPass1!","password_confirmation":"ValidPass1!"}`)))
+	if recRegOK.Code != http.StatusCreated {
+		t.Fatalf("expected 201 on register, got %d", recRegOK.Code)
+	}
+
+	recProfile := httptest.NewRecorder()
+	reqProfile := httptest.NewRequest(http.MethodPatch, "/v1/auth/profile", bytes.NewBufferString(`{"name":"Edited Name","avatar_key":"avatar-3","role":"admin"}`))
+	reqProfile.Header.Set("Authorization", "Bearer test-session-token")
+	mux.ServeHTTP(recProfile, reqProfile)
+	if recProfile.Code != http.StatusOK {
+		t.Fatalf("expected 200 on profile update, got %d", recProfile.Code)
+	}
+	var profResp struct {
+		User struct {
+			Name      string `json:"name"`
+			AvatarKey string `json:"avatar_key"`
+			Role      string `json:"role"`
+		} `json:"user"`
+	}
+	_ = json.Unmarshal(recProfile.Body.Bytes(), &profResp)
+	if profResp.User.Name != "Edited Name" || profResp.User.AvatarKey != "avatar-3" || profResp.User.Role != "user" {
+		t.Fatalf("profile response unexpected (mass assignment guard failed): %+v", profResp.User)
+	}
+
+	recLink := httptest.NewRecorder()
+	reqLink := httptest.NewRequest(http.MethodPost, "/v1/auth/google/link", bytes.NewBufferString(`{"id_token":"dev:analyst@kairos.local"}`))
+	reqLink.Header.Set("Authorization", "Bearer test-session-token")
+	mux.ServeHTTP(recLink, reqLink)
+	if recLink.Code != http.StatusOK {
+		t.Fatalf("expected 200 on /v1/auth/google/link, got %d (%s)", recLink.Code, recLink.Body.String())
 	}
 
 	// Public guest access on /v1/instruments -> 200; /v1/auth/me remains protected -> 401
@@ -176,13 +307,6 @@ func TestGatewayRoutes(t *testing.T) {
 	mux.ServeHTTP(recUnauthMe, httptest.NewRequest(http.MethodGet, "/v1/auth/me", nil))
 	if recUnauthMe.Code != http.StatusUnauthorized {
 		t.Fatalf("unauthenticated /v1/auth/me expected 401, got %d", recUnauthMe.Code)
-	}
-
-	// POST /v1/auth/google -> 200 with session token
-	recLogin := httptest.NewRecorder()
-	mux.ServeHTTP(recLogin, httptest.NewRequest(http.MethodPost, "/v1/auth/google", bytes.NewBufferString(`{"id_token":"dev:analyst@kairos.local:KAIROS Analyst"}`)))
-	if recLogin.Code != http.StatusOK {
-		t.Fatalf("/v1/auth/google expected 200, got %d", recLogin.Code)
 	}
 
 	// GET /v1/auth/me with Bearer token -> 200

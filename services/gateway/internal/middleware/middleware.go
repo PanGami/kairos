@@ -57,7 +57,8 @@ func newReqID() string {
 	return hex.EncodeToString(b[:])
 }
 
-func clientIP(r *http.Request) string {
+// ClientIP extracts the caller IP address from X-Forwarded-For or RemoteAddr.
+func ClientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		return strings.TrimSpace(strings.Split(xff, ",")[0])
 	}
@@ -84,13 +85,13 @@ func Wrap(next http.Handler, limiter *RateLimiter) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-Id, X-Admin-Api-Key")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
-		ip := clientIP(r)
+		ip := ClientIP(r)
 		if r.URL.Path != "/healthz" && r.URL.Path != "/readyz" && !limiter.Allow(ip) {
 			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 			return

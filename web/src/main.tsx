@@ -8,6 +8,7 @@ import "./styles/global.css";
 import "./styles/chart.css";
 import "./styles/ticker-search.css";
 import "./styles/dashboard-motion.css";
+import "./styles/auth.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
