@@ -63,6 +63,7 @@ export interface AuthUiMessages {
     goToForgotFromGoogleOnly: string;
     resetSuccessBanner: string;
     invalidCredentials: string;
+    suspendedError: string;
     googleOnlyMessage: string;
     unverifiedBanner: string;
   };
@@ -210,6 +211,7 @@ export const authUiEn: AuthUiMessages = {
     goToForgotFromGoogleOnly: "Create password via Forgot Password",
     resetSuccessBanner: "Your password was updated. All previous sessions were signed out. Sign in with your new password.",
     invalidCredentials: "Incorrect email or password",
+    suspendedError: "Your account has been suspended by an administrator.",
     googleOnlyMessage:
       "This account is linked with Google. Sign in with Google, or create a password via Forgot Password.",
     unverifiedBanner: "Your email is not verified yet. Enter the new 6-digit code sent to your inbox.",
@@ -364,6 +366,7 @@ export const authUiId: AuthUiMessages = {
     resetSuccessBanner:
       "Password berhasil diperbarui dan semua sesi sebelumnya telah direset. Silakan masuk dengan password baru.",
     invalidCredentials: "Email atau password salah",
+    suspendedError: "Akun Anda sedang dinonaktifkan oleh admin.",
     googleOnlyMessage:
       "Akun ini terhubung dengan Google. Silakan masuk dengan Google, atau buat password lewat 'Lupa Password'.",
     unverifiedBanner:

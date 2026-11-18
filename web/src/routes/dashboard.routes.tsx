@@ -1,4 +1,6 @@
 import type { RouteObject } from "react-router-dom";
-import { DashboardPage } from "../pages/DashboardPage";
+import { lazyRoute } from "./lazyRoute";
 
-export const dashboardRoutes: RouteObject[] = [{ index: true, element: <DashboardPage /> }];
+export const dashboardRoutes: RouteObject[] = [
+  { index: true, element: lazyRoute(() => import("../pages/DashboardPage"), "DashboardPage", "dashboard") },
+];

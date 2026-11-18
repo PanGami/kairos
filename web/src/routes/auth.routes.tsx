@@ -1,20 +1,35 @@
 import type { RouteObject } from "react-router-dom";
+import { AdminRoute } from "../components/AdminRoute";
 import { ProtectedRoute } from "../components/ProtectedRoute";
-import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
-import { LoginPage } from "../pages/LoginPage";
-import { ProfilePage } from "../pages/ProfilePage";
-import { RegisterPage } from "../pages/RegisterPage";
+import { lazyRoute } from "./lazyRoute";
 
 export const authRoutes: RouteObject[] = [
-  { path: "/login", element: <LoginPage /> },
-  { path: "/register", element: <RegisterPage /> },
-  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  {
+    path: "/login",
+    element: lazyRoute(() => import("../pages/LoginPage"), "LoginPage", "auth"),
+  },
+  {
+    path: "/register",
+    element: lazyRoute(() => import("../pages/RegisterPage"), "RegisterPage", "auth"),
+  },
+  {
+    path: "/forgot-password",
+    element: lazyRoute(() => import("../pages/ForgotPasswordPage"), "ForgotPasswordPage", "auth"),
+  },
   {
     path: "/profile",
     element: (
       <ProtectedRoute>
-        <ProfilePage />
+        {lazyRoute(() => import("../pages/ProfilePage"), "ProfilePage", "profile")}
       </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/users",
+    element: (
+      <AdminRoute>
+        {lazyRoute(() => import("../pages/AdminUsersPage"), "AdminUsersPage", "table")}
+      </AdminRoute>
     ),
   },
 ];

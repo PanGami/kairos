@@ -104,6 +104,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-Kairos <noreply@kairos>}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
     ports:
       - "50052:50052"
     depends_on:

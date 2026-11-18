@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { PageSkeleton } from "../components/LoadingSkeleton";
 import { OtpVerificationView } from "../components/auth/OtpVerificationView";
 import { PasswordChecklist } from "../components/auth/PasswordChecklist";
 import { PasswordInput } from "../components/auth/PasswordInput";
@@ -29,11 +30,7 @@ export function RegisterPage() {
   const [pendingOtp, setPendingOtp] = useState<{ email: string; cooldown: number } | null>(null);
 
   if (loading) {
-    return (
-      <div className="login-shell">
-        <p className="muted">{t.login.checkingAuth}</p>
-      </div>
-    );
+    return <PageSkeleton variant="auth" label={t.login.checkingAuth} />;
   }
   if (user) {
     return <Navigate to="/watcher" replace />;

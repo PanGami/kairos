@@ -41,16 +41,27 @@ func toProtoUser(u repository.UserRecord) *authv1.User {
 	if role == "" {
 		role = "user"
 	}
+	var createdAt, lastLoginAt string
+	if !u.CreatedAt.IsZero() {
+		createdAt = u.CreatedAt.UTC().Format(time.RFC3339)
+	}
+	if !u.LastLoginAt.IsZero() {
+		lastLoginAt = u.LastLoginAt.UTC().Format(time.RFC3339)
+	}
 	return &authv1.User{
-		UserId:        u.UserID,
-		Email:         u.Email,
-		Name:          u.Name,
-		PictureUrl:    u.PictureURL,
-		AvatarKey:     u.AvatarKey,
-		Role:          role,
-		EmailVerified: u.EmailVerified,
-		GoogleLinked:  u.GoogleLinked,
-		HasPassword:   u.HasPassword,
+		UserId:         u.UserID,
+		Email:          u.Email,
+		Name:           u.Name,
+		PictureUrl:     u.PictureURL,
+		AvatarKey:      u.AvatarKey,
+		Role:           role,
+		EmailVerified:  u.EmailVerified,
+		GoogleLinked:   u.GoogleLinked,
+		HasPassword:    u.HasPassword,
+		Suspended:      u.Suspended,
+		CreatedAt:      createdAt,
+		LastLoginAt:    lastLoginAt,
+		ActiveSessions: u.ActiveSessions,
 	}
 }
 
@@ -72,8 +83,10 @@ func mapDomainError(rid, op string, err error) error {
 		code = codes.Unauthenticated
 	case services.ErrEmailExists.Code, services.ErrEmailExistsGoogle.Code, services.ErrPasswordAlreadySet.Code, services.ErrGoogleAlreadyLinked.Code:
 		code = codes.AlreadyExists
-	case services.ErrEmailNotVerified.Code, services.ErrGoogleOnlyAccount.Code:
+	case services.ErrEmailNotVerified.Code, services.ErrGoogleOnlyAccount.Code, services.ErrForbidden.Code, services.ErrAccountSuspended.Code:
 		code = codes.PermissionDenied
+	case services.ErrUserNotFound.Code:
+		code = codes.NotFound
 	case services.ErrOTPCooldown.Code, services.ErrOTPRateLimited.Code:
 		code = codes.ResourceExhausted
 	default:
@@ -247,4 +260,46 @@ func (h *AuthServicer) SetPassword(ctx context.Context, req *authv1.SetPasswordR
 	}
 	slog.Info("auth.password.set_ok", "user_id", user.UserID, "request_id", rid)
 	return &authv1.SetPasswordResponse{User: toProtoUser(user)}, nil
+}
+
+func (h *AuthServicer) ListUsers(ctx context.Context, req *authv1.ListUsersRequest) (*authv1.ListUsersResponse, error) {
+	rid := requestID(ctx)
+	users, err := h.sessions.ListUsers(ctx, req.GetSessionToken(), req.GetSearch())
+	if err != nil {
+		return nil, mapDomainError(rid, "list_users", err)
+	}
+	out := make([]*authv1.User, 0, len(users))
+	for _, u := range users {
+		out = append(out, toProtoUser(u))
+	}
+	return &authv1.ListUsersResponse{Users: out}, nil
+}
+
+func (h *AuthServicer) SetUserSuspended(ctx context.Context, req *authv1.SetUserSuspendedRequest) (*authv1.SetUserSuspendedResponse, error) {
+	rid := requestID(ctx)
+	user, err := h.sessions.SetUserSuspended(ctx, req.GetSessionToken(), req.GetUserId(), req.GetSuspended())
+	if err != nil {
+		return nil, mapDomainError(rid, "set_user_suspended", err)
+	}
+	slog.Info("auth.admin.suspend_updated", "target_user_id", user.UserID, "suspended", user.Suspended, "request_id", rid)
+	return &authv1.SetUserSuspendedResponse{User: toProtoUser(user)}, nil
+}
+
+func (h *AuthServicer) RevokeUserSessions(ctx context.Context, req *authv1.RevokeUserSessionsRequest) (*authv1.RevokeUserSessionsResponse, error) {
+	rid := requestID(ctx)
+	count, err := h.sessions.RevokeUserSessions(ctx, req.GetSessionToken(), req.GetUserId())
+	if err != nil {
+		return nil, mapDomainError(rid, "revoke_user_sessions", err)
+	}
+	slog.Info("auth.admin.sessions_revoked", "target_user_id", req.GetUserId(), "revoked_count", count, "request_id", rid)
+	return &authv1.RevokeUserSessionsResponse{RevokedCount: count}, nil
+}
+
+func (h *AuthServicer) DeleteUser(ctx context.Context, req *authv1.DeleteUserRequest) (*authv1.DeleteUserResponse, error) {
+	rid := requestID(ctx)
+	if err := h.sessions.DeleteUser(ctx, req.GetSessionToken(), req.GetUserId()); err != nil {
+		return nil, mapDomainError(rid, "delete_user", err)
+	}
+	slog.Info("auth.admin.user_deleted", "target_user_id", req.GetUserId(), "request_id", rid)
+	return &authv1.DeleteUserResponse{Ok: true}, nil
 }

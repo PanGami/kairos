@@ -24,6 +24,11 @@ service AuthService {
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
   rpc RequestSetPasswordOTP(RequestSetPasswordOTPRequest) returns (RequestSetPasswordOTPResponse);
   rpc SetPassword(SetPasswordRequest) returns (SetPasswordResponse);
+
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc SetUserSuspended(SetUserSuspendedRequest) returns (SetUserSuspendedResponse);
+  rpc RevokeUserSessions(RevokeUserSessionsRequest) returns (RevokeUserSessionsResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
 }
 
 message User {
@@ -36,6 +41,10 @@ message User {
   bool email_verified = 7;
   bool google_linked = 8;
   bool has_password = 9;
+  bool suspended = 10;
+  string created_at = 11;
+  string last_login_at = 12;
+  int32 active_sessions = 13;
 }
 
 message SignInWithGoogleRequest {
@@ -180,4 +189,41 @@ message SetPasswordRequest {
 
 message SetPasswordResponse {
   User user = 1;
+}
+
+message ListUsersRequest {
+  string session_token = 1;
+  string search = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message SetUserSuspendedRequest {
+  string session_token = 1;
+  string user_id = 2;
+  bool suspended = 3;
+}
+
+message SetUserSuspendedResponse {
+  User user = 1;
+}
+
+message RevokeUserSessionsRequest {
+  string session_token = 1;
+  string user_id = 2;
+}
+
+message RevokeUserSessionsResponse {
+  int32 revoked_count = 1;
+}
+
+message DeleteUserRequest {
+  string session_token = 1;
+  string user_id = 2;
+}
+
+message DeleteUserResponse {
+  bool ok = 1;
 }

@@ -14,6 +14,6 @@ func NewRouter(h *handler.Handler, authSvc *services.AuthService) *http.ServeMux
 	RegisterAuthRoutes(mux, h, authSvc)
 	RegisterInstrumentRoutes(mux, h, authSvc)
 	RegisterForecastRoutes(mux, h, authSvc)
-	RegisterAdminRoutes(mux, h)
+	RegisterAdminRoutes(mux, h, authSvc)
 	return mux
 }

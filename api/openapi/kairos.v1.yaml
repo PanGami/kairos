@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: >
     REST API served by the gateway to the browser. Forecast endpoints require a valid session
-    for restricted tickers (obtained via /v1/auth/google or /v1/auth/login). Admin refresh requires X-Admin-Api-Key.
+    for restricted tickers (obtained via /v1/auth/google or /v1/auth/login). Admin refresh accepts X-Admin-Api-Key or an admin session token.
     The product is an end-of-day risk monitor, not investment advice.
 servers:
   - url: /
@@ -368,9 +368,111 @@ paths:
       summary: Trigger ingestion + ComputeForecast (admin)
       security:
         - adminApiKey: []
+        - bearerAuth: []
       responses:
         "202": { description: Accepted }
-        "401": { description: Invalid API key }
+        "401": { description: Invalid API key or missing session }
+        "403": { description: Forbidden }
+  /v1/admin/users:
+    get:
+      summary: List users for RBAC management (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: User directory
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items: { $ref: "#/components/schemas/User" }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+  /v1/admin/users/{id}/suspend:
+    post:
+      summary: Suspend or activate a user account (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [suspended]
+              properties:
+                suspended: { type: boolean }
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Invalid request or cannot modify self }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
+  /v1/admin/users/{id}/revoke-sessions:
+    post:
+      summary: Force logout all active sessions for a user (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revoked_count: { type: integer }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
+  /v1/admin/users/{id}:
+    delete:
+      summary: Delete a user account permanently (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "400": { description: Cannot delete own account }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
 components:
   securitySchemes:
     bearerAuth:
@@ -393,6 +495,10 @@ components:
         email_verified: { type: boolean }
         google_linked: { type: boolean }
         has_password: { type: boolean }
+        suspended: { type: boolean }
+        created_at: { type: string, format: date-time }
+        last_login_at: { type: string, format: date-time }
+        active_sessions: { type: integer }
     AuthConfig:
       type: object
       properties:

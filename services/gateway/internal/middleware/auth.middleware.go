@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -62,4 +63,21 @@ func RequireAuth(authSvc *services.AuthService, next http.HandlerFunc) http.Hand
 
 		next(w, r.WithContext(context.WithValue(r.Context(), userContextKey{}, user)))
 	}
+}
+
+// RequireAdmin validates the caller's session via auth-service and requires role == "admin".
+func RequireAdmin(authSvc *services.AuthService, next http.HandlerFunc) http.HandlerFunc {
+	return RequireAuth(authSvc, func(w http.ResponseWriter, r *http.Request) {
+		user, ok := UserFromContext(r.Context())
+		if !ok || user.Role != "admin" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"error": "Akses ditolak. Diperlukan hak akses admin.",
+				"code":  "FORBIDDEN",
+			})
+			return
+		}
+		next(w, r)
+	})
 }

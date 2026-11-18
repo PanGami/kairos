@@ -4,7 +4,6 @@ package handler
 import (
 	"context"
 	"crypto/sha1"
-	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -148,22 +147,4 @@ func (h *Handler) GetHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeCachedJSON(w, r, body)
-}
-
-func (h *Handler) AdminRefresh(w http.ResponseWriter, r *http.Request) {
-	gotKey := r.Header.Get("X-Admin-Api-Key")
-	if h.adminKey == "" || subtle.ConstantTimeCompare([]byte(gotKey), []byte(h.adminKey)) != 1 {
-		http.Error(w, "invalid admin api key", http.StatusUnauthorized)
-		return
-	}
-
-	ctx, cancel := grpcCtx(r, 60*time.Second)
-	defer cancel()
-	results, err := h.forecasts.RefreshAllActive(ctx)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
-	}
-
-	writeJSON(w, http.StatusAccepted, map[string]any{"refreshed": results})
 }

@@ -1,4 +1,6 @@
 import type { RouteObject } from "react-router-dom";
-import { WatcherPage } from "../pages/WatcherPage";
+import { lazyRoute } from "./lazyRoute";
 
-export const watcherRoutes: RouteObject[] = [{ path: "watcher", element: <WatcherPage /> }];
+export const watcherRoutes: RouteObject[] = [
+  { path: "watcher", element: lazyRoute(() => import("../pages/WatcherPage"), "WatcherPage", "watcher") },
+];

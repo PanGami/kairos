@@ -19,15 +19,19 @@ type AuthConfig struct {
 }
 
 type UserDTO struct {
-	UserID        string `json:"user_id"`
-	Email         string `json:"email"`
-	Name          string `json:"name"`
-	PictureURL    string `json:"picture_url"`
-	AvatarKey     string `json:"avatar_key"`
-	Role          string `json:"role"`
-	EmailVerified bool   `json:"email_verified"`
-	GoogleLinked  bool   `json:"google_linked"`
-	HasPassword   bool   `json:"has_password"`
+	UserID         string `json:"user_id"`
+	Email          string `json:"email"`
+	Name           string `json:"name"`
+	PictureURL     string `json:"picture_url"`
+	AvatarKey      string `json:"avatar_key"`
+	Role           string `json:"role"`
+	EmailVerified  bool   `json:"email_verified"`
+	GoogleLinked   bool   `json:"google_linked"`
+	HasPassword    bool   `json:"has_password"`
+	Suspended      bool   `json:"suspended"`
+	CreatedAt      string `json:"created_at,omitempty"`
+	LastLoginAt    string `json:"last_login_at,omitempty"`
+	ActiveSessions int32  `json:"active_sessions"`
 }
 
 type SignInDTO struct {
@@ -86,6 +90,8 @@ func ParseAuthError(err error) *ServiceError {
 		httpCode = http.StatusConflict
 	case codes.PermissionDenied:
 		httpCode = http.StatusForbidden
+	case codes.NotFound:
+		httpCode = http.StatusNotFound
 	case codes.ResourceExhausted:
 		httpCode = http.StatusTooManyRequests
 	case codes.InvalidArgument:
@@ -146,15 +152,19 @@ func toUserDTO(u *authv1.User) UserDTO {
 		role = "user"
 	}
 	return UserDTO{
-		UserID:        u.GetUserId(),
-		Email:         u.GetEmail(),
-		Name:          u.GetName(),
-		PictureURL:    u.GetPictureUrl(),
-		AvatarKey:     u.GetAvatarKey(),
-		Role:          role,
-		EmailVerified: u.GetEmailVerified(),
-		GoogleLinked:  u.GetGoogleLinked(),
-		HasPassword:   u.GetHasPassword(),
+		UserID:         u.GetUserId(),
+		Email:          u.GetEmail(),
+		Name:           u.GetName(),
+		PictureURL:     u.GetPictureUrl(),
+		AvatarKey:      u.GetAvatarKey(),
+		Role:           role,
+		EmailVerified:  u.GetEmailVerified(),
+		GoogleLinked:   u.GetGoogleLinked(),
+		HasPassword:    u.GetHasPassword(),
+		Suspended:      u.GetSuspended(),
+		CreatedAt:      u.GetCreatedAt(),
+		LastLoginAt:    u.GetLastLoginAt(),
+		ActiveSessions: u.GetActiveSessions(),
 	}
 }
 
@@ -334,4 +344,53 @@ func (s *AuthService) SetPassword(ctx context.Context, sessionToken, code, newPa
 		return UserDTO{}, ParseAuthError(err)
 	}
 	return toUserDTO(resp.GetUser()), nil
+}
+
+func (s *AuthService) ListUsers(ctx context.Context, sessionToken, search string) ([]UserDTO, error) {
+	resp, err := s.client.ListUsers(ctx, &authv1.ListUsersRequest{
+		SessionToken: sessionToken,
+		Search:       search,
+	})
+	if err != nil {
+		return nil, ParseAuthError(err)
+	}
+	users := make([]UserDTO, 0, len(resp.GetUsers()))
+	for _, u := range resp.GetUsers() {
+		users = append(users, toUserDTO(u))
+	}
+	return users, nil
+}
+
+func (s *AuthService) SetUserSuspended(ctx context.Context, sessionToken, userID string, suspended bool) (UserDTO, error) {
+	resp, err := s.client.SetUserSuspended(ctx, &authv1.SetUserSuspendedRequest{
+		SessionToken: sessionToken,
+		UserId:       userID,
+		Suspended:    suspended,
+	})
+	if err != nil {
+		return UserDTO{}, ParseAuthError(err)
+	}
+	return toUserDTO(resp.GetUser()), nil
+}
+
+func (s *AuthService) RevokeUserSessions(ctx context.Context, sessionToken, userID string) (int32, error) {
+	resp, err := s.client.RevokeUserSessions(ctx, &authv1.RevokeUserSessionsRequest{
+		SessionToken: sessionToken,
+		UserId:       userID,
+	})
+	if err != nil {
+		return 0, ParseAuthError(err)
+	}
+	return resp.GetRevokedCount(), nil
+}
+
+func (s *AuthService) DeleteUser(ctx context.Context, sessionToken, userID string) error {
+	_, err := s.client.DeleteUser(ctx, &authv1.DeleteUserRequest{
+		SessionToken: sessionToken,
+		UserId:       userID,
+	})
+	if err != nil {
+		return ParseAuthError(err)
+	}
+	return nil
 }

@@ -117,14 +117,38 @@ func (m *mockAuthClient) LinkGoogle(_ context.Context, _ *authv1.LinkGoogleReque
 	return &authv1.LinkGoogleResponse{User: u}, nil
 }
 
+func sampleAdmin() *authv1.User {
+	return &authv1.User{
+		UserId:        "user:admin",
+		Email:         "admin@kairos.local",
+		Name:          "KAIROS Admin",
+		PictureUrl:    "/avatars/avatar-1.png",
+		AvatarKey:     "avatar-1",
+		Role:          "admin",
+		EmailVerified: true,
+		GoogleLinked:  false,
+		HasPassword:   true,
+	}
+}
+
 func (m *mockAuthClient) ValidateSession(_ context.Context, req *authv1.ValidateSessionRequest, _ ...grpc.CallOption) (*authv1.ValidateSessionResponse, error) {
-	if m.revoked || req.GetSessionToken() != "test-session-token" {
+	if m.revoked {
 		return &authv1.ValidateSessionResponse{Valid: false}, nil
 	}
-	return &authv1.ValidateSessionResponse{
-		Valid: true,
-		User:  sampleUser(),
-	}, nil
+	switch req.GetSessionToken() {
+	case "test-session-token":
+		return &authv1.ValidateSessionResponse{
+			Valid: true,
+			User:  sampleUser(),
+		}, nil
+	case "admin-session-token":
+		return &authv1.ValidateSessionResponse{
+			Valid: true,
+			User:  sampleAdmin(),
+		}, nil
+	default:
+		return &authv1.ValidateSessionResponse{Valid: false}, nil
+	}
 }
 
 func (m *mockAuthClient) SignOut(_ context.Context, _ *authv1.SignOutRequest, _ ...grpc.CallOption) (*authv1.SignOutResponse, error) {
@@ -185,6 +209,37 @@ func (m *mockAuthClient) SetPassword(_ context.Context, _ *authv1.SetPasswordReq
 	u := sampleUser()
 	u.HasPassword = true
 	return &authv1.SetPasswordResponse{User: u}, nil
+}
+
+func (m *mockAuthClient) ListUsers(_ context.Context, req *authv1.ListUsersRequest, _ ...grpc.CallOption) (*authv1.ListUsersResponse, error) {
+	if req.GetSessionToken() != "admin-session-token" {
+		return nil, status.Error(codes.PermissionDenied, "FORBIDDEN|0||Akses ditolak. Diperlukan hak akses admin.")
+	}
+	return &authv1.ListUsersResponse{Users: []*authv1.User{sampleAdmin(), sampleUser()}}, nil
+}
+
+func (m *mockAuthClient) SetUserSuspended(_ context.Context, req *authv1.SetUserSuspendedRequest, _ ...grpc.CallOption) (*authv1.SetUserSuspendedResponse, error) {
+	if req.GetSessionToken() != "admin-session-token" {
+		return nil, status.Error(codes.PermissionDenied, "FORBIDDEN|0||Akses ditolak. Diperlukan hak akses admin.")
+	}
+	u := sampleUser()
+	u.UserId = req.GetUserId()
+	u.Suspended = req.GetSuspended()
+	return &authv1.SetUserSuspendedResponse{User: u}, nil
+}
+
+func (m *mockAuthClient) RevokeUserSessions(_ context.Context, req *authv1.RevokeUserSessionsRequest, _ ...grpc.CallOption) (*authv1.RevokeUserSessionsResponse, error) {
+	if req.GetSessionToken() != "admin-session-token" {
+		return nil, status.Error(codes.PermissionDenied, "FORBIDDEN|0||Akses ditolak. Diperlukan hak akses admin.")
+	}
+	return &authv1.RevokeUserSessionsResponse{RevokedCount: 2}, nil
+}
+
+func (m *mockAuthClient) DeleteUser(_ context.Context, req *authv1.DeleteUserRequest, _ ...grpc.CallOption) (*authv1.DeleteUserResponse, error) {
+	if req.GetSessionToken() != "admin-session-token" {
+		return nil, status.Error(codes.PermissionDenied, "FORBIDDEN|0||Akses ditolak. Diperlukan hak akses admin.")
+	}
+	return &authv1.DeleteUserResponse{Ok: true}, nil
 }
 
 func newTestRouter(t *testing.T) *http.ServeMux {
@@ -395,5 +450,63 @@ func TestGatewayRoutes(t *testing.T) {
 	}
 	if _, ok := payload["refreshed"]; !ok {
 		t.Fatalf("expected 'refreshed' field in response")
+	}
+
+	// Admin RBAC routes: standard user gets 403, admin session gets 200/202.
+	recUserAdminRefresh := httptest.NewRecorder()
+	mux.ServeHTTP(recUserAdminRefresh, authedReq(http.MethodPost, "/v1/admin/refresh"))
+	if recUserAdminRefresh.Code != http.StatusForbidden {
+		t.Fatalf("non-admin session on /v1/admin/refresh expected 403, got %d", recUserAdminRefresh.Code)
+	}
+
+	adminReq := func(method, target string, body string) *http.Request {
+		var buf *bytes.Buffer
+		if body != "" {
+			buf = bytes.NewBufferString(body)
+		} else {
+			buf = &bytes.Buffer{}
+		}
+		req := httptest.NewRequest(method, target, buf)
+		req.Header.Set("Authorization", "Bearer admin-session-token")
+		if body != "" {
+			req.Header.Set("Content-Type", "application/json")
+		}
+		return req
+	}
+
+	recAdminSessionRefresh := httptest.NewRecorder()
+	mux.ServeHTTP(recAdminSessionRefresh, adminReq(http.MethodPost, "/v1/admin/refresh", ""))
+	if recAdminSessionRefresh.Code != http.StatusAccepted {
+		t.Fatalf("admin session on /v1/admin/refresh expected 202, got %d", recAdminSessionRefresh.Code)
+	}
+
+	recUserListForbidden := httptest.NewRecorder()
+	mux.ServeHTTP(recUserListForbidden, authedReq(http.MethodGet, "/v1/admin/users"))
+	if recUserListForbidden.Code != http.StatusForbidden {
+		t.Fatalf("non-admin session on /v1/admin/users expected 403, got %d", recUserListForbidden.Code)
+	}
+
+	recAdminList := httptest.NewRecorder()
+	mux.ServeHTTP(recAdminList, adminReq(http.MethodGet, "/v1/admin/users", ""))
+	if recAdminList.Code != http.StatusOK {
+		t.Fatalf("admin session on /v1/admin/users expected 200, got %d", recAdminList.Code)
+	}
+
+	recSuspend := httptest.NewRecorder()
+	mux.ServeHTTP(recSuspend, adminReq(http.MethodPost, "/v1/admin/users/google:dev/suspend", `{"suspended":true}`))
+	if recSuspend.Code != http.StatusOK {
+		t.Fatalf("admin suspend expected 200, got %d: %s", recSuspend.Code, recSuspend.Body.String())
+	}
+
+	recRevoke := httptest.NewRecorder()
+	mux.ServeHTTP(recRevoke, adminReq(http.MethodPost, "/v1/admin/users/google:dev/revoke-sessions", ""))
+	if recRevoke.Code != http.StatusOK {
+		t.Fatalf("admin revoke sessions expected 200, got %d", recRevoke.Code)
+	}
+
+	recDelete := httptest.NewRecorder()
+	mux.ServeHTTP(recDelete, adminReq(http.MethodDelete, "/v1/admin/users/google:dev", ""))
+	if recDelete.Code != http.StatusOK {
+		t.Fatalf("admin delete user expected 200, got %d", recDelete.Code)
 	}
 }

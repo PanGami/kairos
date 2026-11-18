@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   google_linked  BOOLEAN NOT NULL DEFAULT FALSE,
   role           TEXT NOT NULL DEFAULT 'user',
+  suspended      BOOLEAN NOT NULL DEFAULT FALSE,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_login_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );

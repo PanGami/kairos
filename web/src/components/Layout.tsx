@@ -98,6 +98,11 @@ export function Layout() {
               <NavLink to="/methodology" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
                 {t.nav.methodology}
               </NavLink>
+              {user?.role === "admin" && (
+                <NavLink to="/users" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+                  {t.nav.users}
+                </NavLink>
+              )}
             </nav>
           </div>
 

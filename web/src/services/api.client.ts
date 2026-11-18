@@ -95,3 +95,13 @@ export async function patchJson<T>(path: string, body: unknown, signal?: AbortSi
   });
   return handleResponse<T>(res);
 }
+
+export async function deleteJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers: buildHeaders(),
+    credentials: "include",
+    signal,
+  });
+  return handleResponse<T>(res);
+}

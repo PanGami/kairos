@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
+import { PageSkeleton } from "../components/LoadingSkeleton";
 import { OtpVerificationView } from "../components/auth/OtpVerificationView";
 import { PasswordInput } from "../components/auth/PasswordInput";
 import { useAuth } from "../hooks/useAuth";
@@ -24,11 +25,7 @@ export function LoginPage() {
   const [pendingOtp, setPendingOtp] = useState<{ email: string; cooldown: number } | null>(null);
 
   if (loading) {
-    return (
-      <div className="login-shell">
-        <p className="muted">{t.login.checkingAuth}</p>
-      </div>
-    );
+    return <PageSkeleton variant="auth" label={t.login.checkingAuth} />;
   }
   if (user) {
     return <Navigate to="/" replace />;
@@ -66,6 +63,10 @@ export function LoginPage() {
         }
         if (err.code === "INVALID_CREDENTIALS") {
           setLoginError(copy.loginPage.invalidCredentials);
+          return;
+        }
+        if (err.code === "ACCOUNT_SUSPENDED") {
+          setLoginError(copy.loginPage.suspendedError);
           return;
         }
       }

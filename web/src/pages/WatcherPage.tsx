@@ -4,6 +4,7 @@ import { EditorialIntro } from "../components/EditorialIntro";
 import { ForecastSummary } from "../components/ForecastSummary";
 import { HorizonToggle } from "../components/HorizonToggle";
 import { InstrumentSelect } from "../components/InstrumentSelect";
+import { PageSkeleton } from "../components/LoadingSkeleton";
 import { PriceChart } from "../components/PriceChart";
 import { ReliabilityBadge } from "../components/ReliabilityBadge";
 import { TickerSearchDialog } from "../components/TickerSearchDialog";
@@ -131,9 +132,7 @@ export function WatcherPage() {
     <div>
       {instruments.loading ? (
         <>
-          <div className="banner banner-info" role="status">
-            {w.loadingInstruments}
-          </div>
+          <PageSkeleton variant="watcher" label={w.loadingInstruments} />
           <EditorialIntro isGuest={isGuest} />
         </>
       ) : instruments.error ? (

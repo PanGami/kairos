@@ -14,6 +14,17 @@ export interface User {
   email_verified: boolean;
   google_linked: boolean;
   has_password: boolean;
+  suspended: boolean;
+  created_at?: string;
+  last_login_at?: string;
+  active_sessions?: number;
+}
+
+export interface AdminRefreshItem {
+  instrument_id: string;
+  run_id: string;
+  status: string;
+  message: string;
 }
 
 export interface AuthConfig {

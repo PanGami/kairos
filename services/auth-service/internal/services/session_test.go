@@ -187,7 +187,75 @@ func (m *memUserStore) GetUserBySession(_ context.Context, tokenHash string) (re
 		return repository.UserRecord{}, false, nil
 	}
 	u, exists := m.users[entry.userID]
-	return u, exists, nil
+	if !exists || u.Suspended {
+		return repository.UserRecord{}, false, nil
+	}
+	return u, true, nil
+}
+
+func (m *memUserStore) PromoteUserRole(_ context.Context, userID, role string) (repository.UserRecord, error) {
+	u, ok := m.users[userID]
+	if !ok {
+		return repository.UserRecord{}, errors.New("not found")
+	}
+	u.Role = role
+	m.users[userID] = u
+	return u, nil
+}
+
+func (m *memUserStore) ListUsers(_ context.Context, search string) ([]repository.UserRecord, error) {
+	term := strings.ToLower(strings.TrimSpace(search))
+	now := time.Now().UTC()
+	out := make([]repository.UserRecord, 0, len(m.users))
+	for _, u := range m.users {
+		if term != "" && !strings.Contains(strings.ToLower(u.Email), term) && !strings.Contains(strings.ToLower(u.Name), term) {
+			continue
+		}
+		var active int32
+		for _, s := range m.sessions {
+			if s.userID == u.UserID && s.expiresAt.After(now) {
+				active++
+			}
+		}
+		u.ActiveSessions = active
+		out = append(out, u)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Email < out[j].Email })
+	return out, nil
+}
+
+func (m *memUserStore) SetUserSuspended(_ context.Context, userID string, suspended bool) (repository.UserRecord, bool, error) {
+	u, ok := m.users[userID]
+	if !ok {
+		return repository.UserRecord{}, false, nil
+	}
+	u.Suspended = suspended
+	m.users[userID] = u
+	return u, true, nil
+}
+
+func (m *memUserStore) CountAndDeleteUserSessions(_ context.Context, userID string) (int32, error) {
+	var count int32
+	for k, v := range m.sessions {
+		if v.userID == userID {
+			delete(m.sessions, k)
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *memUserStore) DeleteUserByID(_ context.Context, userID string) (bool, error) {
+	if _, ok := m.users[userID]; !ok {
+		return false, nil
+	}
+	delete(m.users, userID)
+	for k, v := range m.sessions {
+		if v.userID == userID {
+			delete(m.sessions, k)
+		}
+	}
+	return true, nil
 }
 
 func (m *memUserStore) DeleteSession(_ context.Context, tokenHash string) error {
@@ -565,5 +633,93 @@ func TestLinkGoogleFlow(t *testing.T) {
 	linked, err := svc.LinkGoogle(ctx, verifyRes.SessionToken, "dev:budi@example.com:Google Display Name")
 	if err != nil || !linked.GoogleLinked || linked.Name != "Budi Rahmat" {
 		t.Fatalf("expected Google linked preserving name, got %+v err=%v", linked, err)
+	}
+}
+
+func TestAdminRBACAndUserManagement(t *testing.T) {
+	ctx := context.Background()
+	store := newMemUserStore()
+	mailer := &mockEmailSender{}
+	svc := NewSessionService(NewGoogleTokenVerifier("", true), store, mailer)
+	svc.SetAdminEmails(ParseAdminEmails("Admin@kairos.local, ops@kairos.local"))
+
+	if _, err := svc.Register(ctx, "Admin Kairos", "admin@kairos.local", "Cedar#Harbor94!", "Cedar#Harbor94!"); err != nil {
+		t.Fatalf("admin register failed: %v", err)
+	}
+	adminSess, err := svc.VerifyOTP(ctx, "admin@kairos.local", domain.OTPPurposeRegister, mailer.lastCode())
+	if err != nil || adminSess.User.Role != "admin" {
+		t.Fatalf("expected admin role from ADMIN_EMAILS, got %+v err=%v", adminSess.User, err)
+	}
+
+	if _, err := svc.Register(ctx, "Regular User", "member@example.com", "Cedar#Harbor94!", "Cedar#Harbor94!"); err != nil {
+		t.Fatalf("user register failed: %v", err)
+	}
+	userSess, err := svc.VerifyOTP(ctx, "member@example.com", domain.OTPPurposeRegister, mailer.lastCode())
+	if err != nil || userSess.User.Role != "user" {
+		t.Fatalf("expected default user role, got %+v err=%v", userSess.User, err)
+	}
+
+	// Standard user must be rejected with FORBIDDEN across admin operations.
+	if _, err := svc.ListUsers(ctx, userSess.SessionToken, ""); !HasErrorCode(err, "FORBIDDEN") {
+		t.Fatalf("expected FORBIDDEN on ListUsers for user role, got %v", err)
+	}
+	if _, err := svc.SetUserSuspended(ctx, userSess.SessionToken, adminSess.User.UserID, true); !HasErrorCode(err, "FORBIDDEN") {
+		t.Fatalf("expected FORBIDDEN on SetUserSuspended for user role, got %v", err)
+	}
+	if _, err := svc.RevokeUserSessions(ctx, userSess.SessionToken, adminSess.User.UserID); !HasErrorCode(err, "FORBIDDEN") {
+		t.Fatalf("expected FORBIDDEN on RevokeUserSessions for user role, got %v", err)
+	}
+	if err := svc.DeleteUser(ctx, userSess.SessionToken, adminSess.User.UserID); !HasErrorCode(err, "FORBIDDEN") {
+		t.Fatalf("expected FORBIDDEN on DeleteUser for user role, got %v", err)
+	}
+
+	// Admin cannot suspend or delete their own account.
+	if _, err := svc.SetUserSuspended(ctx, adminSess.SessionToken, adminSess.User.UserID, true); !HasErrorCode(err, "CANNOT_MODIFY_SELF") {
+		t.Fatalf("expected CANNOT_MODIFY_SELF on self suspend, got %v", err)
+	}
+	if err := svc.DeleteUser(ctx, adminSess.SessionToken, adminSess.User.UserID); !HasErrorCode(err, "CANNOT_MODIFY_SELF") {
+		t.Fatalf("expected CANNOT_MODIFY_SELF on self delete, got %v", err)
+	}
+
+	// Admin searches directory and observes active session count.
+	list, err := svc.ListUsers(ctx, adminSess.SessionToken, "member")
+	if err != nil || len(list) != 1 || list[0].ActiveSessions != 1 {
+		t.Fatalf("expected filtered user with 1 active session, got %+v err=%v", list, err)
+	}
+
+	// Suspend revokes sessions and blocks login.
+	suspendedUser, err := svc.SetUserSuspended(ctx, adminSess.SessionToken, userSess.User.UserID, true)
+	if err != nil || !suspendedUser.Suspended {
+		t.Fatalf("expected user suspended, got %+v err=%v", suspendedUser, err)
+	}
+	if _, valid, err := svc.ValidateSession(ctx, userSess.SessionToken); err != nil || valid {
+		t.Fatalf("expected suspended user session invalidated, valid=%v err=%v", valid, err)
+	}
+	if _, err := svc.LoginWithPassword(ctx, "member@example.com", "Cedar#Harbor94!"); !HasErrorCode(err, "ACCOUNT_SUSPENDED") {
+		t.Fatalf("expected ACCOUNT_SUSPENDED on login, got %v", err)
+	}
+
+	// Reactivate restores login and RevokeUserSessions terminates active sessions.
+	if _, err := svc.SetUserSuspended(ctx, adminSess.SessionToken, userSess.User.UserID, false); err != nil {
+		t.Fatalf("reactivate failed: %v", err)
+	}
+	relogged, err := svc.LoginWithPassword(ctx, "member@example.com", "Cedar#Harbor94!")
+	if err != nil {
+		t.Fatalf("login after reactivation failed: %v", err)
+	}
+	revoked, err := svc.RevokeUserSessions(ctx, adminSess.SessionToken, userSess.User.UserID)
+	if err != nil || revoked != 1 {
+		t.Fatalf("expected 1 revoked session, got %d err=%v", revoked, err)
+	}
+	if _, valid, err := svc.ValidateSession(ctx, relogged.SessionToken); err != nil || valid {
+		t.Fatalf("expected session invalid after force logout, valid=%v err=%v", valid, err)
+	}
+
+	// Delete permanently removes target user.
+	if err := svc.DeleteUser(ctx, adminSess.SessionToken, userSess.User.UserID); err != nil {
+		t.Fatalf("DeleteUser failed: %v", err)
+	}
+	if err := svc.DeleteUser(ctx, adminSess.SessionToken, userSess.User.UserID); !HasErrorCode(err, "USER_NOT_FOUND") {
+		t.Fatalf("expected USER_NOT_FOUND on repeat delete, got %v", err)
 	}
 }

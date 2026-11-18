@@ -1,3 +1,4 @@
+import { adminUsersEn, adminUsersId, type AdminUsersMessages } from "./admin.messages";
 import { authUiEn, authUiId, type AuthUiMessages } from "./auth.messages";
 import {
   chartUiEn,
@@ -41,6 +42,7 @@ export interface Messages {
     dashboard: string;
     watcher: string;
     methodology: string;
+    users: string;
     signIn: string;
     signOut: string;
     verified: string;
@@ -305,6 +307,7 @@ export interface Messages {
   tickerSearch: TickerSearchMessages;
   dashboardChartHover: DashboardChartHoverMessages;
   authUi: AuthUiMessages;
+  adminUsers: AdminUsersMessages;
 }
 
 const en: Messages = {
@@ -315,6 +318,7 @@ const en: Messages = {
     dashboard: "Dashboard",
     watcher: "Watcher",
     methodology: "Methodology",
+    users: "Users",
     signIn: "Sign In",
     signOut: "Sign Out",
     verified: "VERIFIED",
@@ -931,6 +935,7 @@ const en: Messages = {
   tickerSearch: tickerSearchEn,
   dashboardChartHover: dashboardChartHoverEn,
   authUi: authUiEn,
+  adminUsers: adminUsersEn,
 };
 
 const id: Messages = {
@@ -941,6 +946,7 @@ const id: Messages = {
     dashboard: "Dasbor",
     watcher: "Pemantau",
     methodology: "Metodologi",
+    users: "Pengguna",
     signIn: "Masuk",
     signOut: "Keluar",
     verified: "TERVERIFIKASI",
@@ -1557,6 +1563,7 @@ const id: Messages = {
   tickerSearch: tickerSearchId,
   dashboardChartHover: dashboardChartHoverId,
   authUi: authUiId,
+  adminUsers: adminUsersId,
 };
 
 export const MESSAGES: Record<Locale, Messages> = { en, id };

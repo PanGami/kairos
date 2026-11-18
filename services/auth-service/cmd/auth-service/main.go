@@ -67,6 +67,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	adminEmails := services.ParseAdminEmails(os.Getenv("ADMIN_EMAILS"))
+	if err := store.SyncAdminEmails(context.Background(), adminEmails); err != nil {
+		slog.Error("sync admin emails", "err", err)
+		os.Exit(1)
+	}
+
 	devBypass := strings.EqualFold(env("AUTH_DEV_BYPASS", "false"), "true")
 	verifier := services.NewGoogleTokenVerifier(os.Getenv("GOOGLE_CLIENT_ID"), devBypass)
 	smtpUser := os.Getenv("SMTP_USER")
@@ -79,6 +85,7 @@ func main() {
 		os.Getenv("SMTP_FROM"),
 	)
 	sessionSvc := services.NewSessionService(verifier, store, emailSvc)
+	sessionSvc.SetAdminEmails(adminEmails)
 	authHandler := handler.NewAuthServicer(sessionSvc)
 
 	srv := grpc.NewServer()

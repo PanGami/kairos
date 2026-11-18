@@ -33,6 +33,11 @@ type UserStore interface {
 	DeleteOtherUserSessions(ctx context.Context, userID, keepTokenHash string) error
 	InsertAuditLog(ctx context.Context, userID, email, eventType, detail string) error
 	CountRecentAuthEvents(ctx context.Context, email, eventType string, since time.Time) (int, error)
+	PromoteUserRole(ctx context.Context, userID, role string) (repository.UserRecord, error)
+	ListUsers(ctx context.Context, search string) ([]repository.UserRecord, error)
+	SetUserSuspended(ctx context.Context, userID string, suspended bool) (repository.UserRecord, bool, error)
+	CountAndDeleteUserSessions(ctx context.Context, userID string) (int32, error)
+	DeleteUserByID(ctx context.Context, userID string) (bool, error)
 }
 
 type SessionResult struct {
@@ -48,11 +53,12 @@ type RegisterResult struct {
 }
 
 type SessionService struct {
-	verifier GoogleVerifier
-	store    UserStore
-	otp      *OTPService
-	email    EmailSender
-	now      func() time.Time
+	verifier    GoogleVerifier
+	store       UserStore
+	otp         *OTPService
+	email       EmailSender
+	now         func() time.Time
+	adminEmails map[string]struct{}
 }
 
 func NewSessionService(verifier GoogleVerifier, store UserStore, emailSender EmailSender) *SessionService {
@@ -119,6 +125,13 @@ func (s *SessionService) SignInWithGoogle(ctx context.Context, idToken string) (
 	pictureURL, _ := domain.ValidateAvatarKey(avatarKey)
 
 	user, err := s.store.SignInOrLinkGoogleUser(ctx, ident.Sub, email, defaultName, avatarKey, pictureURL)
+	if err != nil {
+		return SessionResult{}, err
+	}
+	if user.Suspended {
+		return SessionResult{}, ErrAccountSuspended
+	}
+	user, err = s.ensureAdminRole(ctx, user)
 	if err != nil {
 		return SessionResult{}, err
 	}
@@ -207,7 +220,7 @@ func (s *SessionService) Register(ctx context.Context, rawName, rawEmail, passwo
 	avatarKey := domain.RandomAvatarKey()
 	pictureURL, _ := domain.ValidateAvatarKey(avatarKey)
 
-	if _, err := s.store.CreateEmailUser(ctx, userID, email, name, avatarKey, pictureURL, pwHash, "user"); err != nil {
+	if _, err := s.store.CreateEmailUser(ctx, userID, email, name, avatarKey, pictureURL, pwHash, s.roleForEmail(email)); err != nil {
 		return RegisterResult{}, err
 	}
 
@@ -237,6 +250,13 @@ func (s *SessionService) VerifyOTP(ctx context.Context, rawEmail, purpose, code 
 	}
 
 	user, err := s.store.MarkEmailVerified(ctx, email)
+	if err != nil {
+		return SessionResult{}, err
+	}
+	if user.Suspended {
+		return SessionResult{}, ErrAccountSuspended
+	}
+	user, err = s.ensureAdminRole(ctx, user)
 	if err != nil {
 		return SessionResult{}, err
 	}
@@ -298,6 +318,9 @@ func (s *SessionService) LoginWithPassword(ctx context.Context, rawEmail, passwo
 		s.recordFailedLogin(ctx, user.UserID, email)
 		return SessionResult{}, ErrInvalidCredentials
 	}
+	if user.Suspended {
+		return SessionResult{}, ErrAccountSuspended
+	}
 
 	if !user.EmailVerified {
 		_, _, otpErr := s.otp.IssueOTP(ctx, email, domain.OTPPurposeRegister)
@@ -316,6 +339,10 @@ func (s *SessionService) LoginWithPassword(ctx context.Context, rawEmail, passwo
 		}
 	}
 
+	user, err = s.ensureAdminRole(ctx, user)
+	if err != nil {
+		return SessionResult{}, err
+	}
 	_ = s.store.UpdateLastLogin(ctx, user.UserID)
 	return s.issueSession(ctx, user)
 }

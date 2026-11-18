@@ -9,17 +9,21 @@ import (
 )
 
 type UserRecord struct {
-	UserID        string
-	GoogleSub     string
-	Email         string
-	Name          string
-	PictureURL    string
-	AvatarKey     string
-	PasswordHash  string
-	EmailVerified bool
-	GoogleLinked  bool
-	Role          string
-	HasPassword   bool
+	UserID         string
+	GoogleSub      string
+	Email          string
+	Name           string
+	PictureURL     string
+	AvatarKey      string
+	PasswordHash   string
+	EmailVerified  bool
+	GoogleLinked   bool
+	Role           string
+	HasPassword    bool
+	Suspended      bool
+	CreatedAt      time.Time
+	LastLoginAt    time.Time
+	ActiveSessions int32
 }
 
 type PostgresUserStore struct {
@@ -41,7 +45,10 @@ const userSelectCols = `
 	email_verified,
 	google_linked,
 	role,
-	(password_hash <> '') AS has_password
+	(password_hash <> '') AS has_password,
+	suspended,
+	created_at,
+	last_login_at
 `
 
 func scanUser(row interface{ Scan(dest ...any) error }) (UserRecord, error) {
@@ -58,6 +65,9 @@ func scanUser(row interface{ Scan(dest ...any) error }) (UserRecord, error) {
 		&u.GoogleLinked,
 		&u.Role,
 		&u.HasPassword,
+		&u.Suspended,
+		&u.CreatedAt,
+		&u.LastLoginAt,
 	)
 	return u, err
 }
@@ -76,6 +86,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   google_linked  BOOLEAN NOT NULL DEFAULT FALSE,
   role           TEXT NOT NULL DEFAULT 'user',
+  suspended      BOOLEAN NOT NULL DEFAULT FALSE,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_login_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -85,6 +96,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT NOT NULL DEFAULT '
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_linked BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ALTER COLUMN google_sub DROP NOT NULL;
 
 UPDATE users
@@ -295,10 +307,13 @@ SELECT
 	u.email_verified,
 	u.google_linked,
 	u.role,
-	(u.password_hash <> '') AS has_password
+	(u.password_hash <> '') AS has_password,
+	u.suspended,
+	u.created_at,
+	u.last_login_at
 FROM user_sessions s
 JOIN users u ON u.user_id = s.user_id
-WHERE s.token_hash = $1 AND s.expires_at > now()
+WHERE s.token_hash = $1 AND s.expires_at > now() AND u.suspended = FALSE
 LIMIT 1;`
 	u, err := scanUser(s.db.QueryRowContext(ctx, q, tokenHash))
 	if errors.Is(err, sql.ErrNoRows) {
