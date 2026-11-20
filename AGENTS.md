@@ -2,6 +2,14 @@
 
 This document is binding for Kiro, Gemini, Claude, and human contributors.
 
+## Documentation Map
+
+Only **4 markdown files** exist in this repository:
+- `README.md` — Project overview, quickstart, commands, contributing workflow, and security policy.
+- `AGENTS.md` — Binding rules for AI agents and contributors (this file).
+- `docs/ARCHITECTURE.md` — Product mandate, system topology, endpoints/RPCs, DB ownership, and ADRs (`ADR-001`–`ADR-016`).
+- `docs/DESIGN.md` — Frontend UI/UX, color tokens, typography, and page specifications.
+
 ## Principles
 
 - Product = end-of-day risk monitor. NOT a price predictor, NOT buy/sell signals. Do not add "real-time" or "enterprise" claims.
@@ -10,7 +18,7 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
 
 ## Split-Ready Rules (MANDATORY)
 
-- Each service is self-contained: its own dependency file, Dockerfile, and README.
+- Each service is self-contained: its own dependency file and multi-stage Dockerfile (service documentation is consolidated in `docs/ARCHITECTURE.md`).
 - Cross-service folder imports are FORBIDDEN. Communication happens strictly via contracts (`.proto`/OpenAPI) and network.
 - Configuration via environment variables (see `.env.example`).
 - Forecasting code in `services/ml-service` is a SEPARATE COPY from `ml/` (notebooks). Consistency is enforced via golden tests, not shared code.
@@ -18,14 +26,14 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
 ## Contracts
 
 - `api/proto/**` and `api/openapi/**` = source of truth. Update contracts first, then implement.
-- Proto stubs are GENERATED at build time (buf), NOT committed. `buf breaking` runs in CI.
-- Exchange-neutral proto package: `kairos.forecast.v1` (no IDX-specific terms).
+- Proto stubs are GENERATED at build time (`buf` / `protoc`), NOT committed. `buf lint` runs in CI; run `make proto-breaking` to check backward compatibility.
+- Exchange-neutral proto packages: `kairos.forecast.v1` and `kairos.auth.v1` (no IDX-specific terms).
 
 ## PostgreSQL Table Ownership (Single DB, Strict Ownership)
 
 - ingestion: `instruments`, `prices_daily`, `ingestion_runs`
 - ml-service: `model_specs`, `forecast_runs`, `forecasts`
-- auth-service: `users`, `user_sessions`
+- auth-service: `users`, `user_sessions`, `user_otps`, `auth_audit_logs`
 - gateway: `api_keys` (admin only)
 - Cross-owner queries are FORBIDDEN. Gateway reads forecasts and auth sessions via gRPC, not SQL.
 
@@ -43,24 +51,24 @@ This document is binding for Kiro, Gemini, Claude, and human contributors.
   - **Data Access / Repositories** (`db.py`, `repository/`, `cache/`): Database connections, SQL queries, and Redis operations, split by domain/table owner as queries grow.
   - **Shared Service Utilities** (`config.py`, `middleware/`, `utils/`): Reusable within-service helpers (structured logging, request-id propagation, rate limiting) to prevent duplicate helper functions.
 
-## UI/UX & Frontend Design Rules (see docs/design/DESIGN.md)
+## UI/UX & Frontend Design Rules (see docs/DESIGN.md)
 
-- **Design Source of Truth**: All frontend UI, color tokens, typography, and page layouts MUST follow `docs/design/DESIGN.md`.
+- **Design Source of Truth**: All frontend UI, color tokens, typography, and page layouts MUST follow `docs/DESIGN.md`.
 - **Zero-Symbol & No-Emoticon Rule**: Emoticons, emojis, and decorative symbols/glyphs (`-`, `—`, `✓`, `★`, `🔒`, `⚠`, `•`, etc.) are FORBIDDEN in UI labels, copy, badges, and buttons. Use pure typographic status pills (`VERIFIED`, `UNVERIFIED`, `LOCKED`, `FEATURED TODAY`) and structured layout spacing.
 - **Core Color Rule (Stockbit-Referenced 60-30-10)**: Use Matte Carbon (`#121212` / `#181818` dark, `#F4F6F8` / `#FFFFFF` light) as 60% foundation, Stockbit Signature Emerald (`#00AB6B` dark / `#006B42` light) as 30% active brand accent and primary CTA highlight, and Financial Amber (`#F59E0B` dark / `#92400E` light) for 95% tail/warning thresholds.
 - **Typography**: Use `'Plus Jakarta Sans'` (display headings at `600`/`700` and UI/body at `400`/`500`/`600`) and `'JetBrains Mono'` with `tabular-nums` (numeric data/tickers). Never use Inter, Roboto, or Arial.
 
 ## Security (Repository Will Be Public)
 
-- DO NOT commit `data/`, model artifacts, or `.env`. gitleaks in pre-commit + CI.
+- DO NOT commit `data/`, model artifacts, or `.env`. `gitleaks` runs in CI.
 - No Azure IPs, subscription IDs, or resource names in the repository.
 - Conventional Commits scoped per service, e.g., `feat(gateway): ...`, `fix(ml-service): ...`.
 
-## Locked Decisions (see docs/adr/ADR.md)
+## Locked Decisions (see docs/ARCHITECTURE.md)
 
 - Split-ready monorepo (ADR-001), single VM + Compose (ADR-002), GitHub Actions (ADR-003).
 - Market-agnostic core (ADR-004), batch forecast stored in DB (ADR-005), proto generated at build (ADR-006).
 - PostgreSQL + Redis cache, no message broker (ADR-007). Nightly batch fit, no on-demand training (ADR-009).
-- Pure gRPC ml-service, NOT FastAPI (ADR-010). Serving = fit procedure, not serialized model files (ADR-011).
-- Public read-only dashboard without login (ADR-012). yfinance primary, Kaggle for repair (ADR-013).
+- Pure gRPC ml-service and auth-service, NOT FastAPI (ADR-010). Serving = fit procedure, not serialized model files (ADR-011).
+- Guest-first Watcher (`IDX:TLKM` open) with optional authentication & admin management via `auth-service` (ADR-016, superseding ADR-012). `yfinance` primary, Kaggle for repair (ADR-013).
 - Models: random walk (M1), GARCH-t (M2), vol-implied (M3) (ADR-014).

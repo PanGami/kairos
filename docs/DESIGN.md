@@ -1,8 +1,8 @@
 # KAIROS: UI/UX & Frontend Design Specification
 
-Document version: 1.5  
+Document version: 1.6  
 Status: Binding Reference for Frontend Development  
-Companion documents: [AGENTS.md](../../AGENTS.md), [PRD.md](../prd/PRD.md), [ADR.md](../adr/ADR.md)  
+Companion documents: [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](./ARCHITECTURE.md)  
 Layout, Color & Typography Reference: [Stockbit](https://stockbit.com/) & [Stockbit Desktop](https://stockbit.com/desktop) (5-Section Product Overview Dashboard, Docked 3-Pane Financial Terminal, Matte Carbon Palette, Signature Emerald Accent, and Geometric Sans + Monospace Typography adapted strictly for End-of-Day Risk Monitoring)
 
 ---
@@ -115,7 +115,7 @@ Do NOT use generic system defaults (`Inter`, `Roboto`, `Arial`, `Segoe UI`, `sys
 ## 6. Page-by-Page Architecture & User Flows
 
 ### 6.1 Entry Flow Overview
-Visitors land directly on the **Overview Dashboard (`/`)** without hitting a login wall. In a single viewport above the fold, `/` explains KAIROS's post-close uncertainty mandate and `M1/M2/M3` models from top to bottom, culminating in primary calls to launch **Risk Watcher (`/watcher`)**. Guest visitors can inspect `IDX:TLKM` (`FEATURED TODAY`) across 7-day and 30-day horizons inside `/watcher`, while remaining tickers stay visible with `LOCKED` indicators inviting Google Sign-In.
+Visitors land directly on the **Overview Dashboard (`/`)** without hitting a login wall. In a single viewport above the fold, `/` explains KAIROS's post-close uncertainty mandate and `M1/M2/M3` models from top to bottom, culminating in primary calls to launch **Risk Watcher (`/watcher`)**. Guest visitors can inspect `IDX:TLKM` (`FEATURED TODAY`) across 7-day and 30-day horizons inside `/watcher`, while remaining tickers stay visible with `LOCKED` indicators inviting sign-in.
 
 ---
 
@@ -193,16 +193,20 @@ Rendered inside `.methodology-screen` (`max-width: 1120px`) using the same termi
 
 ---
 
-### 6.5 Page 4: Authentication (`/login`) and Planned `/settings`
+### 6.5 Page 4: Authentication & Account Management Routes
 
-- **`/login` (Implemented Inside `<Layout />`)**: Mounted inside `<Layout />`'s child routes so the sticky topbar, Dark/Light toggle, and shared disclaimer footer remain accessible. Centers `.login-card` inside `.login-shell`, provides `role="alert"` on authentication error banners, renders user-safe copy when Google Sign-In is unavailable in the environment (no raw `.env` instructions), and includes a `Continue as Guest in Risk Watcher` (`/watcher`) ghost action alongside Google OAuth and optional dev sandbox sign-in.
-- **Planned Subsequent Auth Enhancements & `/settings`**: Integrating local email/password + dual-account linking cleanly per Sections 3 and 4 tokens, and adding a `ProtectedRoute` `/settings` screen (`VERIFIED` / `UNVERIFIED` status, Google link controls, password management, and account deletion confirmation `DELETE`) once post-review sign-off is complete.
+All auth and account routes live inside `<Layout />` (`web/src/routes/auth.routes.tsx`) so the sticky topbar, `EN | ID` switch, Dark/Light toggle, and disclaimer footer remain accessible:
+
+- **`/login` (`LoginPage`)**: Centers `.login-card` inside `.login-shell` with `role="alert"` on error banners, user-safe copy when Google Sign-In is disabled (no `.env` leaks), Google OAuth (`GoogleAuthButton`), local email/password login (`PasswordInput`), Cloudflare Turnstile challenge (`TurnstileWidget`), and a `Continue as Guest in Risk Watcher` (`/watcher`) ghost action.
+- **`/register` (`RegisterPage`) & `/forgot-password` (`ForgotPasswordPage`)**: Local account registration and password recovery flows featuring an inline password policy checklist (`PasswordChecklist`), 6-digit email OTP verification (`OtpVerificationView`), and Turnstile challenge.
+- **`/profile` (`ProfilePage`, wrapped in `<ProtectedRoute>`)**: Authenticated user profile management displaying `VERIFIED` / `UNVERIFIED` status badge, avatar selection modal (`ProfileAvatarModal`), password change/set flow (`ProfilePasswordModal` with OTP verification for OAuth-only accounts), and Google account linking.
+- **`/users` (`AdminUsersPage`, wrapped in `<AdminRoute>`)**: Admin-only user directory table supporting search, suspension toggling, active session revocation, and account deletion confirmation (`DeleteUserModal`).
 
 ---
 
 ## 7. Frontend Code Architecture Alignment
 
-All implementations inside `web/` must comply with [AGENTS.md](../../AGENTS.md):
-- Keep routing (`src/routes/`), API services (`src/services/*.service.ts`), hooks (`src/hooks/`), and presentational components (`src/components/`) strictly separated by domain.
+All implementations inside `web/` must comply with [AGENTS.md](../AGENTS.md):
+- Keep routing (`src/routes/`), API services (`src/services/*.service.ts`), hooks (`src/hooks/`), translations (`src/i18n/`), and presentational components (`src/components/`) strictly separated by domain.
 - Centralize CSS design tokens in `web/src/styles/tokens.css` and base affordance/layout rules in `web/src/styles/global.css`.
 - Keep all UI abstractions exchange-neutral (ADR-004).

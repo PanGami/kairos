@@ -21,7 +21,7 @@ KAIROS is an **end-of-day** dashboard that displays calibrated uncertainty estim
 
 Infra: PostgreSQL (source of truth), Redis (cache), Caddy (TLS), Docker Compose.
 
-Docs: [`docs/prd/PRD.md`](docs/prd/PRD.md) · [`docs/adr/ADR.md`](docs/adr/ADR.md) · contracts in [`api/`](api/).
+Docs: [`AGENTS.md`](AGENTS.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DESIGN.md`](docs/DESIGN.md) · contracts in [`api/`](api/).
 
 ## Run Locally
 
@@ -34,6 +34,8 @@ curl http://localhost/v1/instruments
 curl http://localhost:8080/healthz
 ```
 
+`Makefile` shortcuts: `make up`, `make ingest`, `make test` (`test-python`, `test-go`, `test-web`), `make proto`, `make proto-breaking`.
+
 ## Structure
 
 ```
@@ -42,9 +44,15 @@ services/{gateway,ml-service,ingestion,auth-service}
 web/                       React + TS frontend (Vite)
 ml/                        research (notebooks) — NOT included in production images
 deploy/{caddy,db}          Caddy reverse proxy config and PostgreSQL schema/seed
-docs/{architecture,adr,design,prd}
+docs/{ARCHITECTURE.md,DESIGN.md}
 docker-compose.{local,production}.yml
 ```
+
+## Contributing & Security
+
+- **Workflow**: Binding rules live in [`AGENTS.md`](AGENTS.md). Update contracts (`api/proto`, `api/openapi`) first, work on short-lived branches off `main`, keep cross-service imports strictly forbidden, and use Conventional Commits scoped per service (`feat(gateway): ...`, `fix(ml-service): ...`, `docs: ...`).
+- **Vulnerability Reporting**: Please report security vulnerabilities privately via GitHub Security Advisories on this repository rather than opening public issues.
+- **Repository Practices**: `.env`, `data/`, model artifacts, and generated proto stubs are never committed. CI (`.github/workflows/ci.yml`) enforces `gitleaks`, `buf lint`, Python/Go unit & golden tests, frontend build, and Docker Compose + `Trivy` (`HIGH,CRITICAL` vuln/misconfig/secret) scanning; `.github/dependabot.yml` keeps dependencies updated. Per-IP and auth rate limiting, Cloudflare Turnstile CAPTCHA, SHA-256 hashed session tokens, and API-key-gated `/v1/admin/refresh` are enforced; distributed DDoS mitigation (CDN/WAF) is planned for V2+.
 
 ## Data & Attribution
 
@@ -64,4 +72,4 @@ Neither source is **re-licensed** by this project; users must comply with each p
 
 ## Status
 
-`v1.0.0` ready (end-of-day risk monitor, walk-forward backfill, authentication/admin management, and Docker Compose deployment). See [PRD](docs/prd/PRD.md) section 13 for the V1 → V3 roadmap.
+`v1.0.0` ready (end-of-day risk monitor, walk-forward backfill, authentication/admin management, and Docker Compose deployment). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system architecture, service reference, ADRs, and the V2+ roadmap.
