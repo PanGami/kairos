@@ -123,9 +123,6 @@ export function ProfileAvatarModal({ open, user, onClose, onSuccess }: ProfileAv
         </div>
 
         <div className="footer-modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            {common.closeAction}
-          </button>
           <button
             type="button"
             className="btn btn-primary"

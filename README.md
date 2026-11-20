@@ -54,6 +54,10 @@ This project uses market data from third-party sources for **educational/portfol
 
 Neither source is **re-licensed** by this project; users must comply with each provider's original terms. The terms of use for yfinance and Kaggle **require verification** prior to public release. **KAIROS is not investment advice and does not provide buy/sell signals.**
 
+## Author
+
+- **Panca Nugraha Wicaksana** ([@PanGami](https://github.com/PanGami)) · `pancanugrahawicaksana@gmail.com`
+
 ## License
 
 [MIT](LICENSE).

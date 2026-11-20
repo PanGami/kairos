@@ -276,9 +276,6 @@ export function ProfilePasswordModal({ open, user, onClose, onSuccess }: Profile
           <PasswordChecklist password={newPassword} email={user.email} name={user.name} />
 
           <div className="footer-modal-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              {copy.common.closeAction}
-            </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting
                 ? copy.common.saving

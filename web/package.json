@@ -1,7 +1,16 @@
 {
   "name": "kairos-web",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "author": {
+    "name": "Panca Nugraha Wicaksana",
+    "email": "pancanugrahawicaksana@gmail.com",
+    "url": "https://github.com/PanGami"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PanGami/kairos.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

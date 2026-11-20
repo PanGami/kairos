@@ -1,7 +1,8 @@
 [project]
 name = "kairos-ml-service"
-version = "0.1.0"
+version = "1.0.0"
 description = "KAIROS ml-service: gRPC server (GARCH-t + empirical interval + vol-implied M3)"
+authors = [{ name = "Panca Nugraha Wicaksana", email = "pancanugrahawicaksana@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
   "grpcio>=1.60",
@@ -24,3 +25,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.urls]
+Homepage = "https://github.com/PanGami"
+Repository = "https://github.com/PanGami/kairos"

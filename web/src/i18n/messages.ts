@@ -361,7 +361,7 @@ const en: Messages = {
         items: [
           {
             label: "Maintainer",
-            body: "Developed by PanGami and KAIROS contributors under the MIT open-source license.",
+            body: "Developed by Panca Nugraha Wicaksana (PanGami) under the MIT open-source license.",
           },
           {
             label: "Core Architecture",
@@ -382,11 +382,11 @@ const en: Messages = {
         items: [
           {
             label: "Repository Maintainer",
-            body: "PanGami (KAIROS End-of-Day Risk Monitor).",
+            body: "Panca Nugraha Wicaksana (PanGami).",
           },
           {
             label: "Direct Email",
-            body: "[PLACEHOLDER: maintainer contact email not yet configured for public deployment]",
+            body: "pancanugrahawicaksana@gmail.com",
           },
           {
             label: "Issue Reporting",
@@ -989,7 +989,7 @@ const id: Messages = {
         items: [
           {
             label: "Pengelola",
-            body: "Dikembangkan oleh PanGami dan kontributor KAIROS di bawah lisensi sumber terbuka MIT.",
+            body: "Dikembangkan oleh Panca Nugraha Wicaksana (PanGami) di bawah lisensi sumber terbuka MIT.",
           },
           {
             label: "Arsitektur Inti",
@@ -1010,11 +1010,11 @@ const id: Messages = {
         items: [
           {
             label: "Pengelola Repositori",
-            body: "PanGami (KAIROS End-of-Day Risk Monitor).",
+            body: "Panca Nugraha Wicaksana (PanGami).",
           },
           {
             label: "Email Langsung",
-            body: "[PLACEHOLDER: email kontak pengelola belum dikonfigurasi untuk rilis publik]",
+            body: "pancanugrahawicaksana@gmail.com",
           },
           {
             label: "Format Laporan Kendala",

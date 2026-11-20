@@ -1,7 +1,8 @@
 [project]
 name = "kairos-ingestion"
-version = "0.1.0"
+version = "1.0.0"
 description = "KAIROS ingestion job: yfinance + Kaggle repair rules -> prices_daily -> ml-service.ComputeForecast"
+authors = [{ name = "Panca Nugraha Wicaksana", email = "pancanugrahawicaksana@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
   "grpcio>=1.60",
@@ -23,3 +24,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.urls]
+Homepage = "https://github.com/PanGami"
+Repository = "https://github.com/PanGami/kairos"
