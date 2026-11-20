@@ -1,0 +1,3 @@
+# Placeholder so the data/ folder exists in the repository.
+# Contents of this folder (e.g. canonical.parquet) are NEVER committed — see .gitignore & AGENTS.md.
+# Place local datasets here: data/canonical.parquet

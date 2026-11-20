@@ -1,0 +1,160 @@
+# Local development compose file.
+# Works both standalone (`docker compose -f docker-compose.local.yml up --build`)
+# and as an override (`docker compose -f docker-compose.yml -f docker-compose.local.yml up --build`).
+# Exposes host ports for local debugging. DO NOT use in cloud deployments.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kairos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_locally}
+      POSTGRES_DB: ${POSTGRES_DB:-kairos}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kairos} -d ${POSTGRES_DB:-kairos}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  ml-service:
+    build:
+      context: .
+      dockerfile: services/ml-service/Dockerfile
+    environment:
+      ML_SERVICE_PORT: ${ML_SERVICE_PORT:-50051}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-kairos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_locally}
+      POSTGRES_DB: ${POSTGRES_DB:-kairos}
+    ports:
+      - "50051:50051"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import grpc, os; from grpc_health.v1 import health_pb2, health_pb2_grpc; ch = grpc.insecure_channel('localhost:' + os.environ.get('ML_SERVICE_PORT', '50051')); stub = health_pb2_grpc.HealthStub(ch); assert stub.Check(health_pb2.HealthCheckRequest(service='kairos.forecast.v1.ForecastService'), timeout=2).status == health_pb2.HealthCheckResponse.SERVING",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: services/ingestion/Dockerfile
+    environment:
+      TZ: ${TZ:-Asia/Jakarta}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-kairos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_locally}
+      POSTGRES_DB: ${POSTGRES_DB:-kairos}
+      ML_SERVICE_HOST: ${ML_SERVICE_HOST:-ml-service}
+      ML_SERVICE_PORT: ${ML_SERVICE_PORT:-50051}
+      CANONICAL_PARQUET_PATH: /data/canonical.parquet
+      SKIP_YFINANCE: ${SKIP_YFINANCE:-true}
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
+    restart: "no"
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-50052}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-kairos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_locally}
+      POSTGRES_DB: ${POSTGRES_DB:-kairos}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      AUTH_DEV_BYPASS: ${AUTH_DEV_BYPASS:-true}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Kairos <noreply@kairos>}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+    ports:
+      - "50052:50052"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    environment:
+      GATEWAY_PORT: ${GATEWAY_PORT:-8080}
+      ML_SERVICE_HOST: ${ML_SERVICE_HOST:-ml-service}
+      ML_SERVICE_PORT: ${ML_SERVICE_PORT:-50051}
+      AUTH_SERVICE_HOST: ${AUTH_SERVICE_HOST:-auth-service}
+      AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-50052}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      AUTH_DEV_BYPASS: ${AUTH_DEV_BYPASS:-true}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-change_me_admin_key}
+      RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ml-service
+      - auth-service
+      - redis
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    depends_on:
+      - gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddydata:
+  caddyconfig:

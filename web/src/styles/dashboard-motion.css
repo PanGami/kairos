@@ -1,0 +1,214 @@
+/* Dashboard interactive animations & scroll reveals (theme-aligned via tokens.css).
+   Timings here are intentionally calmer and smoother than the live Watcher terminal. */
+
+@keyframes dashDrawLine {
+  from {
+    stroke-dashoffset: 420;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dashConeFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dashTelemetryIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Below-the-fold section scroll reveal (calm 680ms) */
+.reveal-section {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 680ms cubic-bezier(0.22, 1, 0.36, 1), transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Smooth SVG transitions for theme + feature switches + horizon morph */
+.preview-svg line,
+.preview-svg polyline,
+.preview-svg polygon {
+  transition:
+    opacity 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    stroke 360ms ease,
+    stroke-width 360ms ease,
+    fill 360ms ease;
+}
+
+.hero-device-frame .svg-actual-line {
+  stroke-dasharray: 420;
+  animation: dashDrawLine 1150ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-device-frame .svg-cone-80-fill,
+.hero-device-frame .svg-cone-95-fill {
+  animation: dashConeFade 800ms ease 260ms backwards;
+}
+
+/* Interactive chart layer hover states & hit area */
+.svg-hit-stroke {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+}
+
+.svg-layer {
+  cursor: pointer;
+  transition: opacity 280ms ease;
+}
+
+.svg-layer.is-dimmed {
+  opacity: 0.32;
+}
+
+.svg-layer.is-hovered {
+  opacity: 1;
+}
+
+.svg-layer.is-hovered .svg-actual-line {
+  stroke-width: 3;
+}
+
+.svg-layer.is-hovered .svg-backtest-line {
+  stroke: var(--text-primary);
+  stroke-width: 2.5;
+}
+
+.svg-layer.is-hovered .svg-cone-80-fill,
+.svg-layer.is-hovered .svg-cone-95-fill {
+  opacity: 1;
+}
+
+.svg-layer.is-hovered .svg-band80-line,
+.svg-layer.is-hovered .svg-band95-line {
+  stroke-width: 2.6;
+}
+
+.svg-layer.is-hovered .svg-median-line {
+  stroke-width: 3.2;
+}
+
+.chart-hover-info {
+  margin-top: 8px;
+  min-height: 74px;
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.chart-hover-info.is-active {
+  border-color: var(--border-control);
+  animation: dashTelemetryIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chart-hover-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-hover-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+
+.chart-hover-desc,
+.chart-hover-hint {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Card & preview micro-interactions (NOTE: hero-device-frame has no hover animation) */
+.device-watchlist-row {
+  transition: background-color 220ms ease, border-color 220ms ease, transform 220ms ease;
+}
+
+.device-watchlist-row:hover {
+  transform: translateX(2px);
+}
+
+.dash-benefit-col {
+  transition: transform 240ms ease, border-color 240ms ease, background-color 240ms ease;
+}
+
+.dash-benefit-col:hover {
+  transform: translateY(-2px);
+  border-color: var(--core-cyan);
+}
+
+.warning-alert-card {
+  transition: transform 240ms ease, border-color 240ms ease, background-color 240ms ease;
+}
+
+.warning-alert-card:hover {
+  transform: translateX(3px);
+}
+
+.feature-selector-btn {
+  transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+
+.feature-selector-btn:hover {
+  transform: translateX(2px);
+}
+
+/* Interactive 7D / 30D horizon selector inside WorryHorizonVisual */
+.worry-horizon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+  background: var(--bg-canvas);
+  text-align: left;
+  color: var(--text-primary);
+  transition: border-color 240ms ease, background-color 240ms ease, box-shadow 240ms ease;
+}
+
+.worry-horizon-btn:hover {
+  background: var(--bg-elevated);
+  border-color: var(--core-cyan);
+}
+
+.worry-horizon-btn.active {
+  border-color: var(--core-cyan);
+  background: var(--core-cyan-soft);
+  box-shadow: inset 0 0 0 1px var(--core-cyan);
+}
+
+.features-telemetry-animate {
+  animation: dashTelemetryIn 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}

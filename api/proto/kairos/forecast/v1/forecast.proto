@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+// Exchange-neutral contract (no IDX-specific terms). Source of truth for gateway & ml-service.
+package kairos.forecast.v1;
+
+option go_package = "github.com/kairos/api/gen/kairos/forecast/v1;forecastv1";
+
+// ForecastService is served by ml-service (pure gRPC). Called internally only
+// by gateway and the ingestion job — never by the browser.
+service ForecastService {
+  // Read by gateway to serve the dashboard.
+  rpc GetForecast(GetForecastRequest) returns (GetForecastResponse);
+  rpc ListInstruments(ListInstrumentsRequest) returns (ListInstrumentsResponse);
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+
+  // Internal: triggered by ingestion/scheduler after daily data arrives.
+  rpc ComputeForecast(ComputeForecastRequest) returns (ComputeForecastResponse);
+}
+
+// ---- Enums ----
+
+enum RunStatus {
+  RUN_STATUS_UNSPECIFIED = 0;
+  RUN_STATUS_OK = 1;        // normal fit
+  RUN_STATUS_DEGRADED = 2;  // fallback (EWMA/constant variance) or low reliability
+  RUN_STATUS_FAILED = 3;
+}
+
+enum ReliabilityTier {
+  RELIABILITY_TIER_UNSPECIFIED = 0;
+  RELIABILITY_TIER_FULL = 1;         // e.g. TLKM
+  RELIABILITY_TIER_LOW = 2;          // e.g. GOTO, DCII (thin liquidity)
+  RELIABILITY_TIER_INSUFFICIENT = 3; // failed quality gate
+}
+
+// ---- Instruments (registry) ----
+
+message Instrument {
+  string instrument_id = 1;   // e.g. "IDX:TLKM"
+  string symbol = 2;          // "TLKM"
+  string mic = 3;             // exchange MIC code
+  string currency = 4;        // "IDR"
+  string timezone = 5;        // "Asia/Jakarta"
+  string status = 6;          // active|paused|insufficient_data|delisted
+  ReliabilityTier reliability_tier = 7;
+}
+
+message ListInstrumentsRequest {
+  bool only_active = 1;
+}
+
+message ListInstrumentsResponse {
+  repeated Instrument instruments = 1;
+}
+
+// ---- Forecast ----
+
+message GetForecastRequest {
+  string instrument_id = 1;
+  int32 horizon_days = 2;     // 7 or 30
+}
+
+// A single point along the quantile path (k = 1..h), for the actual-vs-forecast chart.
+message PathPoint {
+  int32 step = 1;             // k days ahead
+  double median = 2;
+  double lower80 = 3;
+  double upper80 = 4;
+  double lower95 = 5;
+  double upper95 = 6;
+}
+
+message Volatility {
+  double daily = 1;
+  double annualized = 2;
+  double lower = 3;           // uncertainty band
+  double upper = 4;
+}
+
+message CorrectionProbability {
+  double theta = 1;             // correction threshold (e.g. 0.05)
+  double probability = 2;       // 0..1
+  double rolling_base_rate = 3; // rolling base rate for comparison
+}
+
+message GetForecastResponse {
+  string instrument_id = 1;
+  int32 horizon_days = 2;
+  string as_of_date = 3;      // ISO date (D-1)
+  RunStatus status = 4;
+  ReliabilityTier reliability_tier = 5;
+
+  // M1: midpoint = random walk (last price) + intervals.
+  double last_price = 6;
+  double median = 7;
+  double lower80 = 8;
+  double upper80 = 9;
+  double lower95 = 10;
+  double upper95 = 11;
+
+  Volatility volatility = 12;            // M2
+  CorrectionProbability correction = 13; // M3
+
+  repeated PathPoint path = 14;          // quantile path k=1..h
+  string last_successful_update = 15;    // ISO datetime
+}
+
+message ComputeForecastRequest {
+  string instrument_id = 1;
+  string as_of_date = 2;      // empty = latest finalized trading day
+  bool backfill = 3;          // true = populate historical walk-forward series
+}
+
+message ComputeForecastResponse {
+  string instrument_id = 1;
+  RunStatus status = 2;
+  int32 horizons_written = 3;
+  string message = 4;
+}
+
+// ---- History (actual prices + walk-forward backtest) ----
+
+message GetHistoryRequest {
+  string instrument_id = 1;
+}
+
+message ActualPoint {
+  string date = 1;            // ISO date
+  double close = 2;           // adjusted close for continuous charting
+  // Additive OHLCV for candlestick charts. Open/high/low are scaled by
+  // adj_close / close so they stay continuous with the adjusted close.
+  double open = 3;
+  double high = 4;
+  double low = 5;
+  int64 volume = 6;           // raw traded volume (0 on non-traded days)
+}
+
+message BacktestPoint {
+  string as_of_date = 1;      // forecast origin date
+  int32 horizon_days = 2;     // 7 or 30
+  double median = 3;
+  double lower80 = 4;
+  double upper80 = 5;
+}
+
+message GetHistoryResponse {
+  string instrument_id = 1;
+  repeated ActualPoint actual = 2;
+  repeated BacktestPoint backtest = 3;
+}
