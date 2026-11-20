@@ -1,0 +1,605 @@
+openapi: 3.0.3
+info:
+  title: KAIROS Gateway API
+  version: 1.0.0
+  description: >
+    REST API served by the gateway to the browser. Forecast endpoints require a valid session
+    for restricted tickers (obtained via /v1/auth/google or /v1/auth/login). Admin refresh accepts X-Admin-Api-Key or an admin session token.
+    The product is an end-of-day risk monitor, not investment advice.
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      responses:
+        "200": { description: OK }
+  /readyz:
+    get:
+      summary: Readiness probe (includes ml-service, auth-service & cache connectivity)
+      responses:
+        "200": { description: Ready }
+        "503": { description: Not ready }
+  /v1/auth/config:
+    get:
+      summary: Public auth client configuration (Google OAuth client ID, Turnstile site key, and dev bypass status)
+      responses:
+        "200":
+          description: Auth configuration
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthConfig" }
+  /v1/auth/google/state:
+    get:
+      summary: Issue a signed OAuth anti-CSRF state token and HttpOnly cookie
+      responses:
+        "200":
+          description: OAuth state token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state: { type: string }
+  /v1/auth/google:
+    post:
+      summary: Exchange a Google ID token for a KAIROS session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_token]
+              properties:
+                id_token: { type: string }
+                state: { type: string }
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SignInResponse" }
+        "401": { description: Invalid Google token }
+  /v1/auth/google/link:
+    post:
+      summary: Activate Login Via Google on an existing authenticated account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_token]
+              properties:
+                id_token: { type: string }
+                state: { type: string }
+      responses:
+        "200":
+          description: Google login activated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Google email mismatch or invalid token }
+        "401": { description: Unauthorized }
+  /v1/auth/register:
+    post:
+      summary: Register a new unverified account and send a 6-digit verification OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+                password_confirmation: { type: string }
+                captcha_token: { type: string }
+      responses:
+        "201": { description: Verification OTP sent }
+        "400": { description: Validation or password policy failure }
+        "409": { description: Email already registered }
+        "429": { description: Rate limited }
+  /v1/auth/login:
+    post:
+      summary: Sign in with normalized email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SignInResponse" }
+        "401": { description: Invalid credentials }
+        "403": { description: Email unverified (OTP sent) or Google-only account }
+        "429": { description: Rate limited }
+  /v1/auth/otp/verify:
+    post:
+      summary: Verify 6-digit registration OTP and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, purpose, code]
+              properties:
+                email: { type: string, format: email }
+                purpose: { type: string, enum: [register_verify] }
+                code: { type: string }
+      responses:
+        "200":
+          description: Verified and signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SignInResponse" }
+        "400": { description: Invalid or expired code }
+        "429": { description: Rate limited }
+  /v1/auth/otp/resend:
+    post:
+      summary: Resend 6-digit OTP respecting cooldown and hourly caps
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, purpose]
+              properties:
+                email: { type: string, format: email }
+                purpose: { type: string, enum: [register_verify, reset_password, set_password] }
+      responses:
+        "200": { description: OTP request accepted }
+        "429": { description: Cooldown active or hourly limit reached }
+  /v1/auth/password/forgot:
+    post:
+      summary: Request password reset OTP (uniform response)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                captcha_token: { type: string }
+      responses:
+        "200": { description: Uniform acceptance message }
+        "429": { description: Rate limited }
+  /v1/auth/password/reset:
+    post:
+      summary: Reset password with OTP and invalidate all existing sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, new_password, password_confirmation]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string }
+                new_password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "200": { description: Password reset complete }
+        "400": { description: Invalid OTP or password policy violation }
+        "429": { description: Rate limited }
+  /v1/auth/profile:
+    patch:
+      summary: Update current user's name and static avatar key
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, avatar_key]
+              properties:
+                name: { type: string }
+                avatar_key: { type: string }
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Invalid name or avatar_key }
+        "401": { description: Unauthorized }
+  /v1/auth/password/change:
+    post:
+      summary: Change password for user with an existing password and revoke other sessions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password, password_confirmation]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "200": { description: Password updated }
+        "400": { description: Policy violation or current password mismatch }
+        "401": { description: Unauthorized }
+  /v1/auth/password/set/request-otp:
+    post:
+      summary: Send OTP to current Google-only user's email to set an initial password
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: OTP sent }
+        "400": { description: Password already configured }
+        "401": { description: Unauthorized }
+        "429": { description: Cooldown active or hourly limit reached }
+  /v1/auth/password/set:
+    post:
+      summary: Set initial password for a Google-only account after OTP verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, new_password, password_confirmation]
+              properties:
+                code: { type: string }
+                new_password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        "200":
+          description: Initial password set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Invalid OTP or password policy violation }
+        "401": { description: Unauthorized }
+  /v1/auth/me:
+    get:
+      summary: Current authenticated user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "401": { description: Unauthorized }
+  /v1/auth/logout:
+    post:
+      summary: Revoke current user session
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+  /v1/instruments:
+    get:
+      summary: List of instruments for dropdown
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: only_active
+          in: query
+          schema: { type: boolean, default: true }
+      responses:
+        "200":
+          description: List of instruments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instruments:
+                    type: array
+                    items: { $ref: "#/components/schemas/Instrument" }
+        "401": { description: Unauthorized }
+  /v1/instruments/{id}/forecast:
+    get:
+      summary: Stored forecast for a single instrument & horizon
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          example: "IDX:TLKM"
+        - name: h
+          in: query
+          required: false
+          schema: { type: integer, enum: [7, 30], default: 7 }
+      responses:
+        "200":
+          description: Forecast
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Forecast" }
+        "400": { description: Invalid horizon parameter (must be 7 or 30) }
+        "401": { description: Unauthorized }
+        "404": { description: Instrument or forecast not found }
+  /v1/instruments/{id}/history:
+    get:
+      summary: Historical actual prices + walk-forward series (backtest)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: History
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/History" }
+        "401": { description: Unauthorized }
+  /v1/admin/refresh:
+    post:
+      summary: Trigger ingestion + ComputeForecast (admin)
+      security:
+        - adminApiKey: []
+        - bearerAuth: []
+      responses:
+        "202": { description: Accepted }
+        "401": { description: Invalid API key or missing session }
+        "403": { description: Forbidden }
+  /v1/admin/users:
+    get:
+      summary: List users for RBAC management (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: User directory
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items: { $ref: "#/components/schemas/User" }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+  /v1/admin/users/{id}/suspend:
+    post:
+      summary: Suspend or activate a user account (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [suspended]
+              properties:
+                suspended: { type: boolean }
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "400": { description: Invalid request or cannot modify self }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
+  /v1/admin/users/{id}/revoke-sessions:
+    post:
+      summary: Force logout all active sessions for a user (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revoked_count: { type: integer }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
+  /v1/admin/users/{id}:
+    delete:
+      summary: Delete a user account permanently (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+        "400": { description: Cannot delete own account }
+        "401": { description: Unauthorized }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    adminApiKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Api-Key
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        picture_url: { type: string }
+        avatar_key: { type: string }
+        role: { type: string }
+        email_verified: { type: boolean }
+        google_linked: { type: boolean }
+        has_password: { type: boolean }
+        suspended: { type: boolean }
+        created_at: { type: string, format: date-time }
+        last_login_at: { type: string, format: date-time }
+        active_sessions: { type: integer }
+    AuthConfig:
+      type: object
+      properties:
+        google_client_id: { type: string }
+        dev_login_enabled: { type: boolean }
+        turnstile_site_key: { type: string }
+    SignInResponse:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        session_token: { type: string }
+        expires_at: { type: string, format: date-time }
+    Instrument:
+      type: object
+      properties:
+        instrument_id: { type: string, example: "IDX:TLKM" }
+        symbol: { type: string }
+        mic: { type: string, example: "XIDX" }
+        currency: { type: string, example: "IDR" }
+        timezone: { type: string, example: "Asia/Jakarta" }
+        status: { type: string, enum: [active, paused, insufficient_data, delisted] }
+        reliability_tier: { type: string, enum: [full, low, insufficient] }
+    Volatility:
+      type: object
+      properties:
+        daily: { type: number }
+        annualized: { type: number }
+        lower: { type: number }
+        upper: { type: number }
+    CorrectionProbability:
+      type: object
+      properties:
+        theta: { type: number, example: 0.05 }
+        probability: { type: number, minimum: 0, maximum: 1 }
+        rolling_base_rate: { type: number }
+    PathPoint:
+      type: object
+      properties:
+        step: { type: integer }
+        median: { type: number }
+        lower80: { type: number }
+        upper80: { type: number }
+        lower95: { type: number }
+        upper95: { type: number }
+    Forecast:
+      type: object
+      properties:
+        instrument_id: { type: string }
+        horizon_days: { type: integer }
+        as_of_date: { type: string, format: date }
+        status: { type: string, enum: [ok, degraded, failed] }
+        reliability_tier: { type: string, enum: [full, low, insufficient] }
+        last_price: { type: number }
+        median: { type: number }
+        lower80: { type: number }
+        upper80: { type: number }
+        lower95: { type: number }
+        upper95: { type: number }
+        volatility: { $ref: "#/components/schemas/Volatility" }
+        correction: { $ref: "#/components/schemas/CorrectionProbability" }
+        path:
+          type: array
+          items: { $ref: "#/components/schemas/PathPoint" }
+        last_successful_update: { type: string, format: date-time }
+    History:
+      type: object
+      properties:
+        instrument_id: { type: string }
+        actual:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              close: { type: number, description: Adjusted close }
+              open: { type: number, description: Open scaled by adj_close / close }
+              high: { type: number, description: High scaled by adj_close / close }
+              low: { type: number, description: Low scaled by adj_close / close }
+              volume: { type: integer, format: int64, description: Raw traded volume }
+        backtest:
+          type: array
+          description: Walk-forward (out-of-sample), labeled distinctly from forward forecast
+          items:
+            type: object
+            properties:
+              as_of_date: { type: string, format: date }
+              horizon_days: { type: integer }
+              median: { type: number }
+              lower80: { type: number }
+              upper80: { type: number }

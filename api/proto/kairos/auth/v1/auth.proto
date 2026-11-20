@@ -1,0 +1,229 @@
+syntax = "proto3";
+
+// Exchange-neutral auth contract. Source of truth for gateway & auth-service.
+package kairos.auth.v1;
+
+option go_package = "github.com/kairos/api/gen/kairos/auth/v1;authv1";
+
+// AuthService manages Google OAuth, email/password authentication, OTP verification,
+// user profile updates, password reset, and opaque server-tracked user sessions.
+// Served over gRPC by auth-service; called internally by gateway only.
+service AuthService {
+  rpc SignInWithGoogle(SignInWithGoogleRequest) returns (SignInWithGoogleResponse);
+  rpc LinkGoogle(LinkGoogleRequest) returns (LinkGoogleResponse);
+  rpc ValidateSession(ValidateSessionRequest) returns (ValidateSessionResponse);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse);
+  rpc ResendOTP(ResendOTPRequest) returns (ResendOTPResponse);
+  rpc LoginWithPassword(LoginWithPasswordRequest) returns (LoginWithPasswordResponse);
+  rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc RequestSetPasswordOTP(RequestSetPasswordOTPRequest) returns (RequestSetPasswordOTPResponse);
+  rpc SetPassword(SetPasswordRequest) returns (SetPasswordResponse);
+
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc SetUserSuspended(SetUserSuspendedRequest) returns (SetUserSuspendedResponse);
+  rpc RevokeUserSessions(RevokeUserSessionsRequest) returns (RevokeUserSessionsResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+}
+
+message User {
+  string user_id = 1;
+  string email = 2;
+  string name = 3;
+  string picture_url = 4;
+  string avatar_key = 5;
+  string role = 6;
+  bool email_verified = 7;
+  bool google_linked = 8;
+  bool has_password = 9;
+  bool suspended = 10;
+  string created_at = 11;
+  string last_login_at = 12;
+  int32 active_sessions = 13;
+}
+
+message SignInWithGoogleRequest {
+  string id_token = 1;
+}
+
+message SignInWithGoogleResponse {
+  User user = 1;
+  string session_token = 2;
+  string expires_at = 3; // RFC3339 timestamp
+}
+
+message LinkGoogleRequest {
+  string session_token = 1;
+  string id_token = 2;
+}
+
+message LinkGoogleResponse {
+  User user = 1;
+}
+
+message ValidateSessionRequest {
+  string session_token = 1;
+}
+
+message ValidateSessionResponse {
+  bool valid = 1;
+  User user = 2;
+}
+
+message SignOutRequest {
+  string session_token = 1;
+}
+
+message SignOutResponse {
+  bool ok = 1;
+}
+
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+  string password_confirmation = 4;
+}
+
+message RegisterResponse {
+  string email = 1;
+  int64 resend_after_seconds = 2;
+  int64 expires_in_seconds = 3;
+}
+
+message VerifyOTPRequest {
+  string email = 1;
+  string purpose = 2;
+  string code = 3;
+}
+
+message VerifyOTPResponse {
+  User user = 1;
+  string session_token = 2;
+  string expires_at = 3;
+}
+
+message ResendOTPRequest {
+  string email = 1;
+  string purpose = 2;
+}
+
+message ResendOTPResponse {
+  int64 resend_after_seconds = 1;
+  int64 expires_in_seconds = 2;
+}
+
+message LoginWithPasswordRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginWithPasswordResponse {
+  User user = 1;
+  string session_token = 2;
+  string expires_at = 3;
+}
+
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+message ForgotPasswordResponse {
+  bool accepted = 1;
+  int64 resend_after_seconds = 2;
+}
+
+message ResetPasswordRequest {
+  string email = 1;
+  string code = 2;
+  string new_password = 3;
+  string password_confirmation = 4;
+}
+
+message ResetPasswordResponse {
+  bool ok = 1;
+}
+
+message UpdateProfileRequest {
+  string session_token = 1;
+  string name = 2;
+  string avatar_key = 3;
+}
+
+message UpdateProfileResponse {
+  User user = 1;
+}
+
+message ChangePasswordRequest {
+  string session_token = 1;
+  string current_password = 2;
+  string new_password = 3;
+  string password_confirmation = 4;
+}
+
+message ChangePasswordResponse {
+  bool ok = 1;
+}
+
+message RequestSetPasswordOTPRequest {
+  string session_token = 1;
+}
+
+message RequestSetPasswordOTPResponse {
+  string email = 1;
+  int64 resend_after_seconds = 2;
+  int64 expires_in_seconds = 3;
+}
+
+message SetPasswordRequest {
+  string session_token = 1;
+  string code = 2;
+  string new_password = 3;
+  string password_confirmation = 4;
+}
+
+message SetPasswordResponse {
+  User user = 1;
+}
+
+message ListUsersRequest {
+  string session_token = 1;
+  string search = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message SetUserSuspendedRequest {
+  string session_token = 1;
+  string user_id = 2;
+  bool suspended = 3;
+}
+
+message SetUserSuspendedResponse {
+  User user = 1;
+}
+
+message RevokeUserSessionsRequest {
+  string session_token = 1;
+  string user_id = 2;
+}
+
+message RevokeUserSessionsResponse {
+  int32 revoked_count = 1;
+}
+
+message DeleteUserRequest {
+  string session_token = 1;
+  string user_id = 2;
+}
+
+message DeleteUserResponse {
+  bool ok = 1;
+}

@@ -1,0 +1,14 @@
+# Generate local stubs (optional; in Docker, generation happens in the protogen stage).
+# Run from api/ folder: `buf generate`
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: ../services/gateway/gen
+    opt: module=github.com/kairos/gateway/gen
+  - remote: buf.build/grpc/go
+    out: ../services/gateway/gen
+    opt: module=github.com/kairos/gateway/gen
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/ml-service/gen
+  - remote: buf.build/grpc/python
+    out: ../services/ml-service/gen
