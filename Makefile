@@ -1,4 +1,4 @@
-.PHONY: proto up down logs build test ingest fmt
+.PHONY: proto up down logs build test test-python test-go test-web ingest fmt proto-breaking
 
 COMPOSE_LOCAL := docker compose -f docker-compose.local.yml
 
@@ -21,9 +21,18 @@ logs:
 ingest:
 	$(COMPOSE_LOCAL) run --rm ingestion
 
-test:
+test: test-python test-go test-web
+
+test-python:
 	python -m unittest discover -s services/ml-service/tests -v
 	python -m unittest discover -s services/ingestion/tests -v
+
+test-go:
+	cd services/gateway && go vet ./... && go test -v ./...
+	cd services/auth-service && go vet ./... && go test -v ./...
+
+test-web:
+	cd web && npm run build
 
 # Check for breaking contract changes against main (also used in CI).
 proto-breaking:

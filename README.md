@@ -14,7 +14,8 @@ KAIROS is an **end-of-day** dashboard that displays calibrated uncertainty estim
 | Unit | Language | Role |
 | --- | --- | --- |
 | `web` | React + TypeScript (Vite) | Static dashboard (served by Caddy) |
-| `gateway` | Go | REST to browser, rate limiting, Redis cache, calls ml-service via gRPC |
+| `gateway` | Go | REST to browser, rate limiting, Redis cache, Turnstile CAPTCHA, calls gRPC services |
+| `auth-service` | Go | gRPC authentication, Google OAuth, OTP email verification, session & admin management |
 | `ml-service` | Python (grpcio) | Fits GARCH-t + empirical intervals + vol-implied M3; owns forecast tables |
 | `ingestion` | Python | Scheduled job: yfinance → validation → `prices_daily` → triggers `ComputeForecast` |
 
@@ -37,12 +38,12 @@ curl http://localhost:8080/healthz
 
 ```
 api/{proto,openapi}        contracts (source of truth)
-services/{gateway,ml-service,ingestion}
+services/{gateway,ml-service,ingestion,auth-service}
 web/                       React + TS frontend (Vite)
 ml/                        research (notebooks) — NOT included in production images
-deploy/{compose,caddy,k8s}
-docs/{architecture,adr,prd}
-config/                    exchange/instrument configuration
+deploy/{caddy,db}          Caddy reverse proxy config and PostgreSQL schema/seed
+docs/{architecture,adr,design,prd}
+docker-compose.{local,production}.yml
 ```
 
 ## Data & Attribution
@@ -59,4 +60,4 @@ Neither source is **re-licensed** by this project; users must comply with each p
 
 ## Status
 
-MVP in development. See PRD section 13 for the V1 → V3 roadmap.
+`v1.0.0` ready (end-of-day risk monitor, walk-forward backfill, authentication/admin management, and Docker Compose deployment). See [PRD](docs/prd/PRD.md) section 13 for the V1 → V3 roadmap.
