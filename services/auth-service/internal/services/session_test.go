@@ -67,12 +67,14 @@ type memUserStore struct {
 	otps     []repository.OTPRecord
 	audits   []string
 	nextID   int64
+	now      func() time.Time
 }
 
 func newMemUserStore() *memUserStore {
 	return &memUserStore{
 		users:    make(map[string]repository.UserRecord),
 		sessions: make(map[string]memSessionEntry),
+		now:      func() time.Time { return time.Now().UTC() },
 	}
 }
 
@@ -183,7 +185,7 @@ func (m *memUserStore) CreateSession(_ context.Context, tokenHash, userID string
 
 func (m *memUserStore) GetUserBySession(_ context.Context, tokenHash string) (repository.UserRecord, bool, error) {
 	entry, ok := m.sessions[tokenHash]
-	if !ok || !entry.expiresAt.After(time.Now().UTC()) {
+	if !ok || !entry.expiresAt.After(m.now().UTC()) {
 		return repository.UserRecord{}, false, nil
 	}
 	u, exists := m.users[entry.userID]
@@ -205,7 +207,7 @@ func (m *memUserStore) PromoteUserRole(_ context.Context, userID, role string) (
 
 func (m *memUserStore) ListUsers(_ context.Context, search string) ([]repository.UserRecord, error) {
 	term := strings.ToLower(strings.TrimSpace(search))
-	now := time.Now().UTC()
+	now := m.now().UTC()
 	out := make([]repository.UserRecord, 0, len(m.users))
 	for _, u := range m.users {
 		if term != "" && !strings.Contains(strings.ToLower(u.Email), term) && !strings.Contains(strings.ToLower(u.Name), term) {
@@ -427,6 +429,7 @@ func TestRegisterOTPLoginResetAndProfilePasswordFlows(t *testing.T) {
 	store := newMemUserStore()
 	mailer := &mockEmailSender{}
 	now := time.Date(2026, 11, 18, 12, 0, 0, 0, time.UTC)
+	store.now = func() time.Time { return now }
 	svc := NewSessionService(NewGoogleTokenVerifier("", true), store, mailer)
 	svc.now = func() time.Time { return now }
 	svc.otp.now = func() time.Time { return now }
